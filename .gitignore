@@ -1,16 +1,34 @@
-# Игнорировать файл .env с конфиденциальными данными
+# frontend
+node_modules/
+*.pnp
+*.pnp.js
+
+coverage/
+*.DS_Store
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.vscode/
+
+#backend
+
+
 *.env
 
-# Игнорировать файлы и директории, сгенерированные операционной системой
 *.log
 *.pot
 *.pyc
+
 __pycache__/
 
-# Игнорировать файлы и директории, сгенерированные IDE/редакторами
 .idea/
 
-# Игнорировать директории и файлы виртуальных окружений
 venv/
 .venv/
 

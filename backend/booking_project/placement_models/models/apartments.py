@@ -10,11 +10,11 @@ from .categories import Categories
 class Apartments(models.Model):
     objects = models.Manager()
 
-    is_active = models.BooleanField(default=True, verbose_name="is active")
+    is_active = models.BooleanField(default=True, verbose_name="Is active")
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
 
-    category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="apartments")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owner")
-
+    category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
+                                 verbose_name="Category", db_index=True)
     title = models.CharField(max_length=130, verbose_name="Apartments title")
     description = models.TextField(max_length=250, validators=[MinLengthValidator(40)],
                                    verbose_name="Apartments description")
@@ -31,13 +31,26 @@ class Apartments(models.Model):
     number_of_beds = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
                                                  verbose_name="Number of beds")
     single_bed = models.IntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
-                                     verbose_name="number of single bed")
+                                     verbose_name="Number of single bed")
     double_bed = models.IntegerField(default=0, validators=[MaxValueValidator(6), MinValueValidator(0)],
-                                     verbose_name="number of double bed")
-    parking = models.BooleanField(default=False, verbose_name="is there a parking space")
-    pets = models.BooleanField(default=False, verbose_name="Is pets available")
+                                     verbose_name="Number of double bed")
 
-    created_at = models.DateField(auto_now_add=True)
+    pets = models.BooleanField(default=False, verbose_name="Pets friendly")
+    free_wifi = models.BooleanField(default=False, verbose_name="Free wifi")
+    smoking = models.BooleanField(default=False, verbose_name="Smoking allowed")
+    parking = models.BooleanField(default=False, verbose_name="Parking space")
+    room_service = models.BooleanField(default=False, verbose_name="Room service")
+    front_desk_allowed_24 = models.BooleanField(default=False, verbose_name="24-hour front desk")
+    free_cancellation = models.BooleanField(default=False, verbose_name="Free cancellation")
+    balcony = models.BooleanField(default=False, verbose_name="Balcony")
+    air_conditioning = models.BooleanField(default=False, verbose_name="Air conditioning")
+    washing_machine = models.BooleanField(default=False, verbose_name="Washing machine")
+    kitchenette = models.BooleanField(default=False, verbose_name="Kitchenette")
+    tv = models.BooleanField(default=False, verbose_name="Tv")
+    coffee_tee_maker = models.BooleanField(default=False, verbose_name="Coffee/Tea maker")
+
+    created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
+    updated_at = models.DateField(auto_now=True, erbose_name="Date updated")
 
     def __str__(self):
         return self.title
