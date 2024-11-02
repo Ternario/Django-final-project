@@ -1,9 +1,9 @@
-from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Q
 from django.core.validators import MinLengthValidator, MaxValueValidator, MinValueValidator, RegexValidator
 from django.utils.text import gettext_lazy as _
 
+from booking_project.users.models import User
 from .categories import Categories
 
 
@@ -50,7 +50,7 @@ class Apartments(models.Model):
     coffee_tee_maker = models.BooleanField(default=False, verbose_name="Coffee/Tea maker")
 
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
-    updated_at = models.DateField(auto_now=True, erbose_name="Date updated")
+    updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
 
     def __str__(self):
         return self.title

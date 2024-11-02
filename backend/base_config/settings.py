@@ -22,12 +22,14 @@ Env.read_env(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.list('ALLOWED_HOSTS')
+SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+
+AUTH_USER_MODEL = 'users.User'
 
 # Application definition
 
@@ -39,8 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
 
     # local
+    'booking_project.users.apps.UsersConfig',
     'booking_project.placement_models.apps.PlacementModelsConfig',
 ]
 
