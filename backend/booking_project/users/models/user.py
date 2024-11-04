@@ -3,7 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
-from booking_project.users.user_manager import CustomUserManager
+from ..user_manager import CustomUserManager
 
 
 class User(AbstractUser):
@@ -16,18 +16,21 @@ class User(AbstractUser):
                                 error_messages={
                                     "unique": _("A user with that username already exists."),
                                 },
+                                null=True,
                                 blank=True
                                 )
-    email = models.EmailField(_("email address"), unique=True)
+    email = models.EmailField(_("email address"), blank=False, null=False, unique=True, error_messages={
+        "unique": _("A user with that username already exists."), })
     first_name = models.CharField(_("first name"), max_length=150)
     last_name = models.CharField(_("last name"), max_length=150)
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Birthday")
     phone = models.CharField(max_length=75, null=True, blank=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_owner = models.BooleanField(default=False, verbose_name="owner")
 
-    # last_login = models.DateTimeField(null=True, blank=True)
-    # email_is_verified = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False, verbose_name="owner")
+    is_verified = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="registered")
+    updated_at = models.DateTimeField(auto_now=True)
+    last_login = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = [
