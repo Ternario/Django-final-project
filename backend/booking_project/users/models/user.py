@@ -21,10 +21,12 @@ class User(AbstractUser):
                                 )
     email = models.EmailField(_("email address"), blank=False, null=False, unique=True, error_messages={
         "unique": _("A user with that username already exists."), })
-    first_name = models.CharField(_("first name"), max_length=150)
-    last_name = models.CharField(_("last name"), max_length=150)
+    first_name = models.CharField(_("first name"), max_length=150, null=False, blank=False)
+    last_name = models.CharField(_("last name"), max_length=150, null=False, blank=False)
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Birthday")
     phone = models.CharField(max_length=75, null=True, blank=True)
+
+    # user_img = models.ImageField(blank=True, null=True, verbose_name="Profile foto")
 
     is_owner = models.BooleanField(default=False, verbose_name="owner")
     is_verified = models.BooleanField(default=False)

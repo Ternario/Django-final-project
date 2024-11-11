@@ -51,8 +51,27 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class UserBaseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'is_owner']
+
+
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'groups', 'user_permissions']
         read_only_fields = ['date_joined', 'updated_at']
+
+
+# class UserDeleteSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = ['email', 'password']
+#
+#     def validate_password(self, value):
+#         try:
+#             validate_password(value)
+#         except ValidationError as exc:
+#             raise serializers.ValidationError(str(exc))
+#         return value

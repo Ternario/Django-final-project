@@ -53,6 +53,5 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         return response
 
     def clear_cookies(self, request):
-        # Метод для удаления истекших куки
         request.COOKIES.pop('access_token', None)
         request.COOKIES.pop('refresh_token', None)

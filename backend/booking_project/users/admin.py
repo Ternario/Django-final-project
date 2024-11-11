@@ -1,13 +1,9 @@
 from django.contrib import admin
 
-# from .forms import CustomUserCreationForm, CustomUserChangeForm
 from .models import User
 
 
 class UserAdmin(admin.ModelAdmin):
-    # add_form = CustomUserCreationForm
-    # form = CustomUserChangeForm
-
     list_display = ('id', 'username', 'first_name', 'last_name', 'is_owner', 'date_joined', 'is_active', 'is_staff')
     list_display_links = ('id', 'username', 'first_name')
     search_fields = ('id', 'username', 'first_name', 'last_name',)
