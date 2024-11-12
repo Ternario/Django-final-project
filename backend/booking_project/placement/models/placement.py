@@ -4,7 +4,6 @@ from django.core.validators import MinLengthValidator, MaxValueValidator, MinVal
 
 from booking_project.users.models import User
 from .categories import Categories
-from .location import Location
 
 
 class Placement(models.Model):
@@ -15,17 +14,14 @@ class Placement(models.Model):
 
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)
-    rating = models.FloatField(null=True, validators=[MinValueValidator(1), MaxValueValidator(5)],
-                               verbose_name="rating 1-5")
     title = models.CharField(max_length=130, verbose_name="Apartments title")
     description = models.TextField(max_length=250, validators=[MinLengthValidator(40)],
                                    verbose_name="Apartments description")
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
 
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
     number_of_rooms = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
                                                   verbose_name="Number of rooms")
-    apartment_area = models.DecimalField(max_digits=5, decimal_places=2,
+    placement_area = models.DecimalField(max_digits=6, decimal_places=2, default=0,
                                          validators=[MaxValueValidator(400), MinValueValidator(10)],
                                          verbose_name="Area of apartment")
     number_of_beds = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
@@ -37,8 +33,6 @@ class Placement(models.Model):
     number_of_reviews = models.IntegerField(default=0, verbose_name="Number of reviews")
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
     updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
-
-    details = models.ForeignKey("PlacementDetails", on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.title

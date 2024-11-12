@@ -1,72 +1,12 @@
-from datetime import datetime, timedelta
-
 from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 
-from ..models import User
+from booking_project.permissions import *
 from ..serialezers.user_serializer import *
-from ..permissions import *
-
-
-def set_jwt_cookies(response, user):
-    # # print('get_users_token user, response: ', user, response)
-    # # Создаем JWT токены
-    # refresh = RefreshToken.for_user(user)
-    # access_token = str(refresh.access_token)
-    # refresh_token = str(refresh)
-    #
-    # # Убедитесь, что флаг secure установлен в True,
-    # # если ваше приложение работает через HTTPS.
-    # # Если вы тестируете локально без HTTPS, установите secure=False.
-    # # Добавляем токены в cookies
-    # response.set_cookie(
-    #     'access_token', access_token,
-    #     httponly=True,
-    #     # httponly=True,
-    #     secure=True,  # Убедитесь, что это True на продакшене
-    #     samesite='lax',
-    #     max_age=timedelta(minutes=25)  # Срок жизни access-токена
-    # )
-    # response.set_cookie(
-    #     'refresh_token', refresh_token,
-    #     httponly=True,
-    #     secure=True,
-    #     samesite='lax',
-    #     # samesite='Lax',
-    #     max_age=timedelta(days=7)  # Срок жизни refresh-токена
-    # )
-    #
-    # # print('get_users_token after add setCookies, response: ', response.data)
-    # return response
-
-    refresh = RefreshToken.for_user(user)
-    access_token = refresh.access_token
-    refresh_token = refresh
-
-    access_expiry = datetime.utcfromtimestamp(access_token['exp'])
-    refresh_expiry = datetime.utcfromtimestamp(refresh['exp'])
-
-    response.set_cookie(
-        key='access_token',
-        value=str(access_token),
-        httponly=True,
-        secure=False,
-        samesite='None',
-        expires=access_expiry
-    )
-    response.set_cookie(
-        key='refresh_token',
-        value=str(refresh_token),
-        httponly=True,
-        secure=False,
-        samesite='None',
-        expires=refresh_expiry
-    )
+from ..set_cookie import set_jwt_cookies
 
 
 class CreateUserView(APIView):
