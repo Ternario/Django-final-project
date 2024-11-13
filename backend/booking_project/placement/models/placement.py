@@ -4,6 +4,7 @@ from django.core.validators import MinLengthValidator, MaxValueValidator, MinVal
 
 from booking_project.users.models import User
 from .categories import Categories
+# from .location import Location
 
 
 class Placement(models.Model):
@@ -11,6 +12,8 @@ class Placement(models.Model):
 
     is_active = models.BooleanField(default=True, verbose_name="Is active")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
+
+    # location = models.OneToOneField(Location, on_delete=models.CASCADE)
 
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)
@@ -21,18 +24,20 @@ class Placement(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")
     number_of_rooms = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
                                                   verbose_name="Number of rooms")
-    placement_area = models.DecimalField(max_digits=6, decimal_places=2, default=0,
-                                         validators=[MaxValueValidator(400), MinValueValidator(10)],
-                                         verbose_name="Area of apartment")
+    placement_area = models.FloatField(blank=False, null=False, default=0)
     number_of_beds = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
                                                  verbose_name="Number of beds")
     single_bed = models.IntegerField(default=1, validators=[MaxValueValidator(6), MinValueValidator(1)],
                                      verbose_name="Number of single bed")
     double_bed = models.IntegerField(default=0, validators=[MaxValueValidator(6), MinValueValidator(0)],
                                      verbose_name="Number of double bed")
-    number_of_reviews = models.IntegerField(default=0, verbose_name="Number of reviews")
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
     updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
+
+    # details = models.OneToOneField(PlacementDetails, on_delete=models.CASCADE, null=True, blank=True,
+    #                                related_name='placement_details')
+    # location = models.OneToOneField(Location, on_delete=models.CASCADE, null=True, blank=True,
+    #                                 related_name='placement_location')
 
     def __str__(self):
         return self.title

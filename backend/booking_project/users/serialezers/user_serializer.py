@@ -18,6 +18,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     def validate(self, data):
         first_name = data.get('first_name')
         last_name = data.get('last_name')
+        password = data.get("password")
+        confirm_password = data.get("confirm_password")
 
         if not re.match('^[a-zA-Z]*$', first_name):
             raise serializers.ValidationError(
@@ -28,9 +30,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "The last name must contain only alphabet symbols"
             )
-
-        password = data.get("password")
-        confirm_password = data.get("confirm_password")
 
         if password != confirm_password:
             raise serializers.ValidationError({"password": "Passwords don't match"})
@@ -54,24 +53,22 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserBaseDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'is_owner']
+        fields = ['id', 'first_name', 'last_name', 'is_landlord']
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'groups', 'user_permissions']
+        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'user_permissions', 'groups']
         read_only_fields = ['date_joined', 'updated_at']
 
+        def update(self, instance, validated_data):
+            password = validated_data.pop('password')
+            print(password)
+            for (key, value) in validated_data.items():
+                setattr(instance, key, value)
+            if password is not None:
+                instance.set_password(password)
+            instance.save()
 
-# class UserDeleteSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = ['email', 'password']
-#
-#     def validate_password(self, value):
-#         try:
-#             validate_password(value)
-#         except ValidationError as exc:
-#             raise serializers.ValidationError(str(exc))
-#         return value
+            return instance

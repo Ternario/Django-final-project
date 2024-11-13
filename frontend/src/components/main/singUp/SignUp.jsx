@@ -25,6 +25,7 @@ export default function Registration() {
         e.preventDefault();
 
         await signUpRequest.signUp(formList).then((response) => {
+            console.log(response);
             switch (response) {
                 case 400:
                     console.log("error");

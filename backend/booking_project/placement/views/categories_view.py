@@ -6,9 +6,8 @@ from booking_project.placement.serializers.categories_serializer import Categori
 
 
 class CategoryCreateListView(ListCreateAPIView):
-    permission_classes = [IsAdminUser, IsAuthenticatedOrReadOnly]
+    # permission_classes = [IsAdminUser, IsAuthenticatedOrReadOnly]
+    permission_classes = [AllowAny]
 
     queryset = Categories.objects.all()
     serializer_class = CategoriesSerializer
-
-

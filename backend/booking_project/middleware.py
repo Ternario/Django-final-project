@@ -47,7 +47,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
                 value=new_access_token,
                 httponly=True,
                 secure=False,
-                samesite='Lax',
+                samesite='None',
                 expires=datetime.utcfromtimestamp(access_expiry)
             )
         return response

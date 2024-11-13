@@ -28,6 +28,7 @@ export default class RequestsMethods {
 
         return await fetch(url, options)
             .then((response) => {
+                console.log(response);
                 if (response.status === 200) {
                     return response.json();
                 }
@@ -36,6 +37,7 @@ export default class RequestsMethods {
             })
             .then((response) => response)
             .catch((response) => {
+                // return response.json();
                 return response.status;
             });
     }

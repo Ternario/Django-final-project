@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     # local
     'booking_project.users.apps.UsersConfig',
     'booking_project.placement.apps.PlacementModelsConfig',
+    'booking_project.booking_info.apps.BookingInfoConfig',
 ]
 
 MIDDLEWARE = [
@@ -167,5 +168,5 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
-CSRF_COOKIE_SAMESITE = 'None'
+# CSRF_COOKIE_SAMESITE = 'None'
 SRF_COOKIE_SECURE = False

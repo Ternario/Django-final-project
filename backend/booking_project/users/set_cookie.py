@@ -1,29 +1,34 @@
+from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from datetime import datetime
 
 
 def set_jwt_cookies(response, user):
-    refresh = RefreshToken.for_user(user)
-    access_token = refresh.access_token
-    refresh_token = refresh
-
-    access_expiry = datetime.utcfromtimestamp(access_token['exp'])
-    refresh_expiry = datetime.utcfromtimestamp(refresh['exp'])
+    refresh_token = RefreshToken.for_user(user)
+    refresh_token_str = str(refresh_token)
+    refresh_token_exp = refresh_token['exp']
+    refresh_token_exp = timezone.datetime.fromtimestamp(
+        refresh_token_exp,
+        tz=timezone.get_current_timezone()
+    )
+    access_token = refresh_token.access_token
+    access_token_str = str(access_token)
+    access_token_exp = access_token['exp']
+    access_token_exp = timezone.datetime.fromtimestamp(
+        access_token_exp,
+        tz=timezone.get_current_timezone()
+    )
 
     response.set_cookie(
-        key='access_token',
-        value=str(access_token),
-        httponly=True,
-        secure=False,
-        samesite='None',
-        expires=access_expiry
+        'refresh_token',
+        refresh_token_str,
+        expires=refresh_token_exp,
+        httponly=True
     )
     response.set_cookie(
-        key='refresh_token',
-        value=str(refresh_token),
-        httponly=True,
-        secure=False,
-        samesite='None',
-        expires=refresh_expiry
+        'access_token',
+        access_token_str,
+        expires=access_token_exp,
+        httponly=True
     )
+
+    return response

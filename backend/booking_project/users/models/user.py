@@ -28,7 +28,7 @@ class User(AbstractUser):
 
     # user_img = models.ImageField(blank=True, null=True, verbose_name="Profile foto")
 
-    is_owner = models.BooleanField(default=False, verbose_name="owner")
+    is_landlord = models.BooleanField(default=False, verbose_name="Is landlord")
     is_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="registered")
     updated_at = models.DateTimeField(auto_now=True)

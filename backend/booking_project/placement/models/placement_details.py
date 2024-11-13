@@ -6,7 +6,7 @@ from booking_project.placement.models.placement import Placement
 class PlacementDetails(models.Model):
     objects = models.Manager()
 
-    placement_id = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_details')
+    placement = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_details')
     pets = models.BooleanField(default=False, verbose_name="Pets friendly")
     free_wifi = models.BooleanField(default=False, verbose_name="Free wifi")
     smoking = models.BooleanField(default=False, verbose_name="Smoking allowed")
