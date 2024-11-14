@@ -4,16 +4,12 @@ from django.core.validators import MinLengthValidator, MaxValueValidator, MinVal
 
 from booking_project.users.models import User
 from .categories import Categories
-# from .location import Location
+from ..manager import SoftDeleteManager
 
 
 class Placement(models.Model):
-    objects = models.Manager()
-
     is_active = models.BooleanField(default=True, verbose_name="Is active")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
-
-    # location = models.OneToOneField(Location, on_delete=models.CASCADE)
 
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)
@@ -33,11 +29,9 @@ class Placement(models.Model):
                                      verbose_name="Number of double bed")
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
     updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
+    is_deleted = models.BooleanField(default=False)
 
-    # details = models.OneToOneField(PlacementDetails, on_delete=models.CASCADE, null=True, blank=True,
-    #                                related_name='placement_details')
-    # location = models.OneToOneField(Location, on_delete=models.CASCADE, null=True, blank=True,
-    #                                 related_name='placement_location')
+    objects = SoftDeleteManager()
 
     def __str__(self):
         return self.title
@@ -50,3 +44,7 @@ class Placement(models.Model):
                 name="Both fields can't be zero"
             )
         ]
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.save()

@@ -1,7 +1,9 @@
 from django.urls import path
 
-from booking_project.booking_info.views.booking_view import BookingDatesListCreate
+from booking_project.booking_info.views.booking_view import BookingDetailsOwnerUpdateView, BookingDetailsUserUpdateView, BookingDetailsListCreate
 
 urlpatterns = [
-    path('create/', BookingDatesListCreate.as_view(), name='bookings_info-create')
+    path('', BookingDetailsListCreate.as_view(), name='booking-create'),
+    path('update_owner/', BookingDetailsOwnerUpdateView.as_view(), name='booking-update'),
+    path('update_user/', BookingDetailsUserUpdateView.as_view(), name='booking-update'),
 ]

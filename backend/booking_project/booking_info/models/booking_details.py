@@ -17,5 +17,8 @@ class BookingDetails(models.Model):
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
     updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
 
+    def __str__(self):
+        return self.placement
+
     class Meta:
         ordering = ['-created_at']

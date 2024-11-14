@@ -1,9 +1,6 @@
-from datetime import datetime
-
 from django.contrib.auth import authenticate
-from django.utils import timezone
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,7 +20,7 @@ class UserCreateView(APIView):
         if serializer.is_valid(raise_exception=True):
             user = serializer.save()
             response = Response({'id': user.id}, status=status.HTTP_201_CREATED)
-            set_jwt_cookies(response, user)
+            response = set_jwt_cookies(response, user)
             return response
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST, )
@@ -39,9 +36,6 @@ class UserLoginView(APIView):
         user = authenticate(request, username=email, password=password)
 
         if user:
-            # user_data = User.objects.get(email=email)
-            # serializer = UserBaseDetailSerializer(user)
-            # response = Response(serializer.data, status=status.HTTP_200_OK)
             response = Response(status=status.HTTP_200_OK)
             response = set_jwt_cookies(response, user)
             return response
@@ -50,7 +44,7 @@ class UserLoginView(APIView):
 
 
 class UserDetailsUpdateDeleteView(RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsOwner, IsAuthenticated)
+    permission_classes = (IsOwnerUser, IsAuthenticated)
     serializer_class = UserDetailSerializer
 
     def retrieve(self, request, *args, **kwargs):
@@ -78,7 +72,7 @@ class UserDetailsUpdateDeleteView(RetrieveUpdateDestroyAPIView):
 
 
 class UserBaseDetailUserView(APIView):
-    permission_classes = (IsOwner, IsAuthenticated)
+    permission_classes = (IsOwnerUser, IsAuthenticated)
 
     def post(self, request):
         user = User.objects.get(email=request.user)

@@ -8,15 +8,16 @@ from booking_project.placement.serializers.placement_serializer import Placement
 from booking_project.users.serialezers.user_serializer import UserBaseDetailSerializer
 
 
-class BookingDatesCreateSerializer(serializers.ModelSerializer):
-    user = UserBaseDetailSerializer(read_only=True)
-
+class BookingDetailserializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
         fields = '__all__'
+        # exclude = ['is_active', 'is_confirmed', 'is_cancelled']
         read_only_fields = ['is_active', 'is_confirmed', 'is_cancelled']
 
     def validate(self, data):
+        placement = data.get('placement')
+        user = data.get('user')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
 
@@ -25,13 +26,11 @@ class BookingDatesCreateSerializer(serializers.ModelSerializer):
         if end_date <= start_date:
             raise serializers.ValidationError("The end date must be at least one day later than the start date ")
 
-        # user = data.get('user')
-        #
-        # if user == data.get('placement').owner:
-        #     raise serializers.ValidationError("You can't booking your own apartment")
+        if user == data.get('placement').owner:
+            raise serializers.ValidationError("You can't booking your own apartment")
 
-        overlapping_reservations = BookingDetails.objects.filter(
-            placement=data.get('placement')
+        bookings = BookingDetails.objects.filter(
+            placement=placement
         ).filter(
             Q(start_date__lt=end_date) &
             Q(end_date__gt=start_date) &
@@ -39,27 +38,31 @@ class BookingDatesCreateSerializer(serializers.ModelSerializer):
             Q(is_cancelled=False)
         )
 
-        if overlapping_reservations.exists():
+        if bookings.exists():
             raise serializers.ValidationError('This apartment is already reserved for the selected dates.')
 
         return data
 
+    def create(self, validated_data):
+        user = validated_data.pop('user')
 
-class BookingDatesUserSerializer(serializers.ModelSerializer):
-    placement = PlacementSerializer(read_only=True)
+        booking = BookingDetails.objects.create(user=user, **validated_data)
+        booking.save()
 
+        return booking
+
+
+class BookingDetailsUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
         fields = ['start_date', 'end_date', 'is_confirmed', 'is_cancelled', 'is_active',
                   'created_at']
-        only_read_fields = ['placement__title', 'is_confirmed', 'created_at']
+        read_only_fields = ['is_confirmed', 'created_at', 'updated_at', 'start_date', 'end_date', 'is_active']
 
 
-class BookingDatesOwnerSerializer(serializers.ModelSerializer):
-    user = UserBaseDetailSerializer(read_only=True)
-
+class BookingDetailsOwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
-        fields = ['placement__title', '' 'start_date', 'end_date', 'is_confirmed', 'is_cancelled', 'is_active',
-                  'created_at']
-        only_read_fields = ['created_at', 'user__first_name', 'user__last_name']
+        fields = ['is_confirmed', 'is_cancelled', 'placement', 'user', 'created_at', 'updated_at', 'start_date',
+                  'end_date', 'is_active']
+        read_only_fields = ['created_at', 'updated_at', 'start_date', 'end_date', 'is_active']
