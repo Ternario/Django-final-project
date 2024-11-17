@@ -8,14 +8,14 @@ from booking_project.placement.models.placement_details import PlacementDetails
 class PlacementDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlacementDetails
-        exclude = ['placement']
+        fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'placement']
 
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        exclude = ['placement']
+        fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', "placement"]
 
 
@@ -33,18 +33,25 @@ class FullPlacementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Placement
         fields = '__all__'
-        only_read_fields = ['created_at', 'updated_at']
+        only_read_fields = ['created_at', 'updated_at', 'is_deleted']
 
     def create(self, validated_data):
-        details_field = validated_data.pop('placement_details')
+        details_field = validated_data.pop('placement_details', None)
 
-        location = validated_data.pop('placement_location')
+        location = validated_data.pop('placement_location', None)
 
         placement = Placement.objects.create(**validated_data)
         placement.save()
 
-        PlacementDetails.objects.create(placement=placement, **details_field)
+        if details_field:
+            PlacementDetails.objects.create(placement=placement, **details_field)
 
         Location.objects.create(placement=placement, **location)
 
         return placement
+
+
+class PlacementBaseDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Placement
+        exclude = ['is_active', 'owner', 'is_deleted']

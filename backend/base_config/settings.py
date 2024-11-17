@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'booking_project.users.apps.UsersConfig',
     'booking_project.placement.apps.PlacementModelsConfig',
     'booking_project.booking_info.apps.BookingInfoConfig',
+    'booking_project.reviews.apps.ReviewConfig',
 ]
 
 MIDDLEWARE = [

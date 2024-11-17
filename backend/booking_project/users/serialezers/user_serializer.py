@@ -12,7 +12,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password', 'confirm_password')
+        fields = ('id', 'first_name', 'last_name', 'email', 'password', 'confirm_password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def validate(self, data):
@@ -53,18 +53,20 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 class UserBaseDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', "email"]
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'password']
+        read_only_fields = ['first_name', 'last_name', 'username']
+        extra_kwargs = {'password': {'write_only': True}}
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'user_permissions', 'groups']
-        read_only_fields = ['date_joined', 'updated_at']
+        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'user_permissions', 'groups', 'is_deleted']
+        read_only_fields = ['id', 'date_joined', 'updated_at', 'email']
 
         def update(self, instance, validated_data):
             password = validated_data.pop('password')
-            print(password)
+
             for (key, value) in validated_data.items():
                 setattr(instance, key, value)
             if password is not None:

@@ -8,7 +8,7 @@ from booking_project.placement.models.placement import Placement
 class Location(models.Model):
     objects = models.Manager()
 
-    placement = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_location')
+    placement = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_location', verbose_name='placement')
     country = models.CharField(max_length=155, verbose_name="Country name")
     city = models.CharField(max_length=100, verbose_name="City name")
     post_code = models.CharField(max_length=6, validators=[RegexValidator('^[0-9]{0,6}$', _('Invalid postal code'))])

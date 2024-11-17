@@ -27,7 +27,7 @@ class User(AbstractUser):
     phone = models.CharField(max_length=75, null=True, blank=True)
 
     # user_img = models.ImageField(blank=True, null=True, verbose_name="Profile foto")
-
+    is_deleted = models.BooleanField(default=False, verbose_name="Is deleted")
     is_landlord = models.BooleanField(default=False, verbose_name="Is landlord")
     is_verified = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="registered")
@@ -44,3 +44,7 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.save()

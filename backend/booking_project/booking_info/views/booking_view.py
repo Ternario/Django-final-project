@@ -1,18 +1,20 @@
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, UpdateAPIView, ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.generics import UpdateAPIView, ListCreateAPIView
 from rest_framework.response import Response
 
-from booking_project.booking_info.models.booking_details import BookingDetails
-from booking_project.permissions import IsLandLord
-from booking_project.booking_info.serializers.booking_details_serializer import BookingDetailsUserSerializer, \
-    BookingDetailsOwnerSerializer, BookingDetailserializer
+from booking_project.booking_info.serializers.booking_details_serializer import *
 
 
 class BookingDetailsListCreate(ListCreateAPIView):
-    permission_classes = [IsLandLord, IsAuthenticated]
     queryset = BookingDetails.objects.all()
-    serializer_class = BookingDetailserializer
+    serializer_class = BookingDetailSerializer
+
+    def get_queryset(self):
+        if self.request.method == 'GET':
+            user = self.request.user
+            return BookingDetails.objects.filter(user=user)
+        else:
+            return self.queryset
 
 
 class BookingDetailsOwnerUpdateView(UpdateAPIView):

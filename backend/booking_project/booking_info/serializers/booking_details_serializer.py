@@ -4,15 +4,12 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from booking_project.booking_info.models.booking_details import BookingDetails
-from booking_project.placement.serializers.placement_serializer import PlacementSerializer
-from booking_project.users.serialezers.user_serializer import UserBaseDetailSerializer
 
 
-class BookingDetailserializer(serializers.ModelSerializer):
+class BookingDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
         fields = '__all__'
-        # exclude = ['is_active', 'is_confirmed', 'is_cancelled']
         read_only_fields = ['is_active', 'is_confirmed', 'is_cancelled']
 
     def validate(self, data):
@@ -20,7 +17,7 @@ class BookingDetailserializer(serializers.ModelSerializer):
         user = data.get('user')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-
+        print(data)
         if start_date < datetime.today().date():
             raise serializers.ValidationError("Start date can't be in the past")
         if end_date <= start_date:
@@ -65,4 +62,4 @@ class BookingDetailsOwnerSerializer(serializers.ModelSerializer):
         model = BookingDetails
         fields = ['is_confirmed', 'is_cancelled', 'placement', 'user', 'created_at', 'updated_at', 'start_date',
                   'end_date', 'is_active']
-        read_only_fields = ['created_at', 'updated_at', 'start_date', 'end_date', 'is_active']
+        read_only_fields = ['created_at', 'updated_at', 'start_date', 'end_date']

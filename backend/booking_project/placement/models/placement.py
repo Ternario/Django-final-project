@@ -4,7 +4,7 @@ from django.core.validators import MinLengthValidator, MaxValueValidator, MinVal
 
 from booking_project.users.models import User
 from .categories import Categories
-from ..manager import SoftDeleteManager
+from ..placement_manager import SoftDeleteManager
 
 
 class Placement(models.Model):
@@ -14,7 +14,7 @@ class Placement(models.Model):
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)
     title = models.CharField(max_length=130, verbose_name="Apartments title")
-    description = models.TextField(max_length=250, validators=[MinLengthValidator(40)],
+    description = models.TextField(max_length=350, validators=[MinLengthValidator(40)],
                                    verbose_name="Apartments description")
 
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Price")

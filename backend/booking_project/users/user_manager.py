@@ -38,3 +38,6 @@ class CustomUserManager(BaseUserManager):
             last_name,
             **extra_fields
         )
+
+    def get_by_natural_key(self, email):
+        return self.get(**{self.model.USERNAME_FIELD: email, "is_deleted": False})
