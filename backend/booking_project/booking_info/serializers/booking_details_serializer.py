@@ -17,7 +17,7 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         user = data.get('user')
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        print(data)
+
         if start_date < datetime.today().date():
             raise serializers.ValidationError("Start date can't be in the past")
         if end_date <= start_date:
