@@ -1,0 +1,37 @@
+.button {
+    margin-left: 20px;
+    height: 50px;
+    cursor: pointer;
+    background-color: beige;
+    font-size: 1.5rem;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+}
+
+.button:hover {
+    background-color: rgb(240, 240, 155);
+}
+
+.CloseIconWrapper {
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 70px;
+    height: 70px;
+    color: white;
+    border: 4px solid rgb(240, 243, 243);
+    border-radius: 50%;
+    background-color: #112d49;
+    transition: all 0.5s ease;
+}
+
+.CloseIconWrapper:hover {
+    cursor: pointer;
+    border-color: red;
+    transition: border 0.25 ease-out;
+    transform: scale(1.2);
+}
