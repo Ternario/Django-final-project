@@ -10,7 +10,7 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at', 'author']
+        read_only_fields = ['created_at', 'updated_at']
         extra_kwargs = {'rating': {'required': True}}
 
     def validate(self, data):
