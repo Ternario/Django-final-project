@@ -1,4 +1,6 @@
 from django.contrib import admin
+
+from booking_project.placement.models.location import Location
 from booking_project.placement.models.placement import Placement
 from booking_project.placement.models.categories import Categories
 from booking_project.placement.models.placement_details import PlacementDetails
@@ -18,3 +20,5 @@ class PlacementAdmin(admin.ModelAdmin):
 
 admin.site.register(Categories, CategoryAdmin)
 admin.site.register(Placement, PlacementAdmin)
+admin.site.register(PlacementDetails)
+admin.site.register(Location)

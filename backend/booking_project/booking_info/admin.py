@@ -1,3 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
+from booking_project.booking_info.models.booking_details import BookingDetails
+
+admin.site.register(BookingDetails)

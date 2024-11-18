@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework import serializers
 
 from booking_project.booking_info.models.booking_details import BookingDetails
@@ -8,12 +10,21 @@ class RatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'author']
         extra_kwargs = {'rating': {'required': True}}
 
     def validate(self, data):
         author = data.get('author')
         placement = data.get('placement')
+        booking_date = data.get('booking')
+
+        if booking_date.start_date > datetime.today().date():
+            raise serializers.ValidationError("You can't write review for apartments you have in future")
+
+        booking_date = Review.objects.filter(author=author, booking=booking_date)
+
+        if booking_date:
+            raise serializers.ValidationError("You have already left a comment for this reservation.")
 
         booking = BookingDetails.objects.filter(user=author, placement=placement)
 

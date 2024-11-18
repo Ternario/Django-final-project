@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db.models import Q
 from rest_framework import serializers
@@ -52,14 +52,24 @@ class BookingDetailSerializer(serializers.ModelSerializer):
 class BookingDetailsUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
-        fields = ['start_date', 'end_date', 'is_confirmed', 'is_cancelled', 'is_active',
+        fields = ['id', 'start_date', 'end_date', 'is_confirmed', 'is_cancelled', 'is_active',
                   'created_at']
-        read_only_fields = ['is_confirmed', 'created_at', 'updated_at', 'start_date', 'end_date', 'is_active']
+        read_only_fields = ['id', 'is_confirmed', 'created_at', 'updated_at', 'is_active', 'end_date']
+
+    def validate(self, data):
+        start_date = data.get('start_date')
+
+        cancel_date = start_date - timedelta(days=2)
+
+        if datetime.today().date() >= cancel_date:
+            raise serializers.ValidationError("You can't cancel the booking")
+
+        return data
 
 
 class BookingDetailsOwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = BookingDetails
-        fields = ['is_confirmed', 'is_cancelled', 'placement', 'user', 'created_at', 'updated_at', 'start_date',
+        fields = ['is_confirmed', 'is_cancelled', 'created_at', 'updated_at', 'start_date',
                   'end_date', 'is_active']
-        read_only_fields = ['created_at', 'updated_at', 'start_date', 'end_date']
+        read_only_fields = ['created_at', 'updated_at', 'start_date', 'end_date', 'placement', 'user']

@@ -1,7 +1,7 @@
-from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListCreateAPIView, ListAPIView, CreateAPIView, UpdateAPIView
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.generics import ListAPIView, CreateAPIView, UpdateAPIView, DestroyAPIView
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
+from booking_project.permissions import IsOwnerReview
 from booking_project.reviews.serializers.review_serializer import *
 
 
@@ -19,7 +19,13 @@ class ReviewListView(ListAPIView):
 
 
 class ReviewUpdateView(UpdateAPIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsOwnerReview, IsAuthenticatedOrReadOnly]
     queryset = Review.objects.all()
     serializer_class = ReviewUpdateSerializer
+    lookup_field = 'pk'
+
+
+class ReviewDestroyView(DestroyAPIView):
+    permission_classes = [IsOwnerReview, IsAuthenticated]
+    queryset = Review.objects.all()
     lookup_field = 'pk'

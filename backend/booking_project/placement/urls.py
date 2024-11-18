@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/', PlacementRetrieveUpdateDestroyView.as_view(), name="placement"),
     path('details/<int:placement>/', PlacementDetailsRetrieveUpdateDestroyView.as_view(), name="placement-details"),
     path('location/<int:placement>/', LocationRetrieveUpdateDestroyView.as_view(), name="placement-location"),
+    path('inactive/', InactivePlacementListView.as_view(), name="placement-inactive"),
+    path('inactive/<int:pk>/', InactivePlacementRetrieveUpdateDestroyView.as_view(), name="placement-inactive-details")
 ]
