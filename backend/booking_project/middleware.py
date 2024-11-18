@@ -12,9 +12,9 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         if access_token:
             try:
                 token = AccessToken(access_token)
-                if datetime.utcfromtimestamp(token['exp']) < datetime.utcnow():
-                    raise TokenError('Token expired')
-                request.META['HTTP_AUTHORIZATION'] = f'Bearer {access_token}'
+                if datetime.fromtimestamp(token['exp']) < datetime.now():
+                    raise TokenError('Token is expired')
+                request.META['HTTP_AUTHORIZATION'] = f"Bearer {access_token}"
             except TokenError:
                 new_access_token = self.refresh_access_token(refresh_token)
                 if new_access_token:
@@ -43,12 +43,10 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         if new_access_token:
             access_expiry = AccessToken(new_access_token)['exp']
             response.set_cookie(
-                key='access_token',
-                value=new_access_token,
-                httponly=True,
-                secure=False,
-                samesite='None',
-                expires=datetime.utcfromtimestamp(access_expiry)
+                'access_token',
+                new_access_token,
+                expires=access_expiry,
+                httponly=True
             )
         return response
 
