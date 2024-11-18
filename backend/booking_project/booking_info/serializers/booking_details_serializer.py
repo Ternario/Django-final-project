@@ -54,7 +54,7 @@ class BookingDetailsUserSerializer(serializers.ModelSerializer):
         model = BookingDetails
         fields = ['id', 'start_date', 'end_date', 'is_confirmed', 'is_cancelled', 'is_active',
                   'created_at']
-        read_only_fields = ['id', 'is_confirmed', 'created_at', 'updated_at', 'is_active', 'end_date']
+        read_only_fields = ['id', 'is_confirmed', 'created_at', 'updated_at', 'end_date']
 
     def validate(self, data):
         start_date = data.get('start_date')
