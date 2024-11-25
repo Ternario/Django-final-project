@@ -1,6 +1,6 @@
 from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, CreateAPIView
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, CreateAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -58,6 +58,16 @@ class UserDetailsUpdateDeleteView(RetrieveUpdateDestroyAPIView):
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
         return response
+
+
+class UserImageUpdate(RetrieveUpdateAPIView):
+    permission_classes = (IsOwnerUser, IsAuthenticated)
+    serializer_class = UserImageUpdateSerializer
+
+    def get_object(self):
+        obj = User.objects.get(email=self.request.user)
+        self.check_object_permissions(self.request, obj)
+        return obj
 
 
 class LogoutUserView(APIView):

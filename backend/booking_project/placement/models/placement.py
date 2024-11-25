@@ -4,13 +4,23 @@ from django.core.validators import MinLengthValidator, MaxValueValidator, MinVal
 
 from booking_project.users.models import User
 from .categories import Categories
-from ..placement_manager import SoftDeleteManager
+from datetime import datetime
+
+
+# from ..placement_manager import SoftDeleteManager
 
 
 class Placement(models.Model):
-    objects = models.Manager()
+
+    def upload_to(self, filename):
+        filename, ext = filename.split('.')
+        time = str(datetime.now().strftime("%d_%m_%Y %H_%M_%S"))
+        filename = f"{filename}_{time}.{ext}"
+        return '{}/placement/{}/{}'.format(self.owner, self.pk, filename)
+
     is_active = models.BooleanField(default=True, verbose_name="Is active")
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
+    # placement_imgs = models.ImageField(upload_to=upload_to, blank=True, null=True, verbose_name="Profile foto")
 
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)

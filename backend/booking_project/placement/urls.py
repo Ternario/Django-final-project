@@ -1,6 +1,8 @@
 from django.urls import path
 
 from booking_project.placement.views.categories_view import CategoryCreateListView
+from booking_project.placement.views.location_view import LocationRetrieveUpdateDestroyView
+from booking_project.placement.views.placement_details_view import PlacementDetailsRetrieveUpdateDestroyView
 from booking_project.placement.views.placement_view import *
 
 urlpatterns = [
