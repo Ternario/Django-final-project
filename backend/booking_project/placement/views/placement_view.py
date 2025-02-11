@@ -1,5 +1,5 @@
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, RetrieveUpdateAPIView
+from rest_framework.generics import CreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -10,7 +10,7 @@ from booking_project.placement.serializers.placement_serializer import *
 class PlacementCreateView(CreateAPIView):
     permission_classes = [IsLandLord, IsAuthenticated]
     queryset = Placement.objects.all()
-    serializer_class = FullPlacementSerializer
+    serializer_class = CreatePlacementSerializer
 
 
 class InactivePlacementListView(ListAPIView):
@@ -52,17 +52,3 @@ class PlacementRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     queryset = Placement.objects.all()
     serializer_class = PlacementSerializer
     lookup_field = 'pk'
-
-
-class PlacementDetailsRetrieveUpdateDestroyView(RetrieveUpdateAPIView):
-    permission_classes = [IsOwnerPlacementDetails, IsAuthenticatedOrReadOnly]
-    queryset = PlacementDetails.objects.all()
-    serializer_class = PlacementDetailSerializer
-    lookup_field = 'placement'
-
-
-class LocationRetrieveUpdateDestroyView(RetrieveUpdateAPIView):
-    permission_classes = [IsOwnerPlacementDetails, IsAuthenticatedOrReadOnly]
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    lookup_field = 'placement'

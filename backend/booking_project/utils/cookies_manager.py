@@ -22,13 +22,15 @@ def set_jwt_cookies(response, user):
         'refresh_token',
         refresh_token_str,
         expires=refresh_token_exp,
-        httponly=True
+        httponly=True,
+        samesite='None'
     )
     response.set_cookie(
         'access_token',
         access_token_str,
         expires=access_token_exp,
-        httponly=True
+        httponly=True,
+        samesite='None'
     )
 
     return response

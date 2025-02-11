@@ -3,16 +3,15 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
-from ..user_manager import CustomUserManager
+from booking_project.utils.user_manager import CustomUserManager
 
 
 class User(AbstractUser):
-    username_validator = UnicodeUsernameValidator()
     username = models.CharField(_("username"), max_length=150, unique=True,
                                 help_text=_(
                                     "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
                                 ),
-                                validators=[username_validator],
+                                validators=[UnicodeUsernameValidator()],
                                 error_messages={
                                     "unique": _("A user with that username already exists."),
                                 },
@@ -26,10 +25,12 @@ class User(AbstractUser):
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Birthday")
     phone = models.CharField(max_length=75, null=True, blank=True)
 
-    # user_img = models.ImageField(blank=True, null=True, verbose_name="Profile foto")
-    is_deleted = models.BooleanField(default=False, verbose_name="Is deleted")
+    is_admin = models.BooleanField(default=False, verbose_name="Admin")
+    is_moderator = models.BooleanField(default=False, verbose_name="Moderator")
     is_landlord = models.BooleanField(default=False, verbose_name="Is landlord")
-    is_verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False, verbose_name="Is verified")
+    is_deleted = models.BooleanField(default=False, verbose_name="Is deleted")
+
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name="registered")
     updated_at = models.DateTimeField(auto_now=True)
     last_login = models.DateTimeField(auto_now=True, null=True, blank=True)

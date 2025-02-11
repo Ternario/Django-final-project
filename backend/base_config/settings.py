@@ -10,13 +10,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 from datetime import timedelta
-from pathlib import Path
 from environ import Env
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = Env()
-Env.read_env(BASE_DIR / '.env')
+Env.read_env(str(os.path.join(BASE_DIR, '.env')))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'user.User'
 
 # Application definition
 
@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # local
-    'booking_project.users.apps.UsersConfig',
+    'booking_project.user.apps.UsersConfig',
     'booking_project.placement.apps.PlacementModelsConfig',
     'booking_project.booking_info.apps.BookingInfoConfig',
     'booking_project.reviews.apps.ReviewConfig',
@@ -139,7 +139,6 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -170,9 +169,13 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_ALLOW_ALL = True
 
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
 
-# CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
 SRF_COOKIE_SECURE = False
+
+STATIC_URL = 'static/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'

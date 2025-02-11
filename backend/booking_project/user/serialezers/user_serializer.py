@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from booking_project.utils.media_services import delete_old_file
 from ..models.user import User
 
 
@@ -59,18 +60,19 @@ class UserBaseDetailSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.ModelSerializer):
+    date_joined = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
     class Meta:
         model = User
-        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'user_permissions', 'groups', 'is_deleted']
+        exclude = ['last_login', 'password', 'is_superuser', 'is_staff', 'user_permissions', 'groups', 'is_deleted',
+                   'is_verified', 'is_active', 'is_moderator', 'is_admin']
         read_only_fields = ['id', 'date_joined', 'updated_at', 'email']
 
-        def update(self, instance, validated_data):
-            password = validated_data.pop('password')
+    def update(self, instance, validated_data):
+        for (key, value) in validated_data.items():
+            setattr(instance, key, value)
 
-            for (key, value) in validated_data.items():
-                setattr(instance, key, value)
-            if password is not None:
-                instance.set_password(password)
-            instance.save()
+        instance.save()
 
-            return instance
+        return instance

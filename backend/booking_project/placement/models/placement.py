@@ -2,16 +2,14 @@ from django.db import models
 from django.db.models import Q
 from django.core.validators import MinLengthValidator, MaxValueValidator, MinValueValidator
 
-from booking_project.users.models import User
+from booking_project.user.models import User
 from .categories import Categories
-from ..placement_manager import SoftDeleteManager
 
 
 class Placement(models.Model):
     objects = models.Manager()
-    is_active = models.BooleanField(default=True, verbose_name="Is active")
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
 
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="Owner", verbose_name="Owner")
     category = models.ForeignKey(Categories, on_delete=models.PROTECT, related_name="Apartments",
                                  verbose_name="Category", db_index=True)
     title = models.CharField(max_length=130, verbose_name="Apartments title")
@@ -28,9 +26,12 @@ class Placement(models.Model):
                                      verbose_name="Number of single bed")
     double_bed = models.IntegerField(default=0, validators=[MaxValueValidator(6), MinValueValidator(0)],
                                      verbose_name="Number of double bed")
+
     created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
     updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
-    is_deleted = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True, verbose_name="Is active")
+    is_deleted = models.BooleanField(default=False, verbose_name="Is deleted")
 
     def __str__(self):
         return self.title
@@ -44,7 +45,7 @@ class Placement(models.Model):
             )
         ]
 
-    # def delete(self, *args, **kwargs):
-    #     self.is_deleted = True
-    #     self.is_active = False
-    #     self.save()
+    def delete(self, *args, **kwargs):
+        self.is_deleted = True
+        self.is_active = False
+        self.save()

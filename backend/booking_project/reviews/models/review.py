@@ -3,7 +3,7 @@ from django.db import models
 
 from booking_project.booking_info.models.booking_details import BookingDetails
 from booking_project.placement.models.placement import Placement
-from booking_project.users.models import User
+from booking_project.user.models import User
 
 
 class Review(models.Model):
