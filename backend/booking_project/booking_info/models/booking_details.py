@@ -1,7 +1,7 @@
 from django.db import models
 
 from booking_project.placement.models.placement import Placement
-from booking_project.users.models.user import User
+from booking_project.user.models.user import User
 
 
 class BookingDetails(models.Model):

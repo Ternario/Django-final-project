@@ -1,8 +1,9 @@
 from django.urls import path, include
 
 urlpatterns = [
-    path('user/', include('booking_project.users.urls')),
-    path('placement/', include('booking_project.placement.urls')),
-    path('booking/', include('booking_project.booking_info.urls')),
-    path('review/', include('booking_project.reviews.urls')),
+    path('auth/', include('booking_project.urls.auth')),
+    path('user/', include('booking_project.urls.user')),
+    path('placement/', include('booking_project.urls.placement')),
+    path('booking/', include('booking_project.urls.booking')),
+    path('review/', include('booking_project.urls.reviews')),
 ]

@@ -10,7 +10,7 @@ from booking_project.placement.serializers.placement_serializer import *
 class PlacementCreateView(CreateAPIView):
     permission_classes = [IsLandLord, IsAuthenticated]
     queryset = Placement.objects.all()
-    serializer_class = FullPlacementSerializer
+    serializer_class = CreatePlacementSerializer
 
 
 class InactivePlacementListView(ListAPIView):
