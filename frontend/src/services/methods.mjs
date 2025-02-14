@@ -20,7 +20,6 @@ export default class RequestsMethods {
 
         const options = {
             method: "POST",
-            mode: "cors",
             credentials: "include",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify(data),
