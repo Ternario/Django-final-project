@@ -1,7 +1,7 @@
 from django.urls import path
 
-from booking_project.user.views import UserDetailsUpdateDeleteView
+from booking_project.views.user import UserDetailsUpdateDeleteView
 
 urlpatterns = [
-    path('details/', UserDetailsUpdateDeleteView.as_view(), name="user-detail")
+    path('', UserDetailsUpdateDeleteView.as_view(), name="user-detail")
 ]

@@ -1,19 +1,15 @@
 from django.urls import path
 
-from booking_project.placement.views.categories_view import CategoryCreateListView
-from booking_project.placement.views.location_view import LocationRetrieveUpdateDestroyView
-from booking_project.placement.views.placement_details_view import PlacementDetailsRetrieveUpdateDestroyView
-from booking_project.placement.views.placement_image_view import ImageRetrieveUpdateAPIView
-from booking_project.placement.views.placement_view import *
+from booking_project.views.placement_location import LocationRetrieveUpdateView
+from booking_project.views.placement_details import PlacementDetailsRetrieveUpdateView
+from booking_project.views.placement_image import ImageRetrieveUpdateAPIView
+from booking_project.views.placement import PlacementCreateView, PlacementListView, PlacementRetrieveUpdateDestroyView
 
 urlpatterns = [
-    path('categories/', CategoryCreateListView.as_view(), name="placement-categories"),
     path('create/', PlacementCreateView.as_view(), name="placement-create"),
     path('', PlacementListView.as_view(), name="placement-list"),
     path('<int:pk>/', PlacementRetrieveUpdateDestroyView.as_view(), name="placement"),
-    path('details/<int:placement>/', PlacementDetailsRetrieveUpdateDestroyView.as_view(), name="placement-details"),
-    path('location/<int:placement>/', LocationRetrieveUpdateDestroyView.as_view(), name="placement-location"),
-    path('images/<int:placement>/', ImageRetrieveUpdateAPIView.as_view(), name="placement-images"),
-    path('inactive/', InactivePlacementListView.as_view(), name="placement-inactive"),
-    path('inactive/<int:pk>/', InactivePlacementRetrieveUpdateDestroyView.as_view(), name="placement-inactive-details")
+    path('<int:placement>/details/', PlacementDetailsRetrieveUpdateView.as_view(), name="placement-details"),
+    path('<int:placement>/location/', LocationRetrieveUpdateView.as_view(), name="placement-location"),
+    path('<int:placement>/images/', ImageRetrieveUpdateAPIView.as_view(), name="placement-images"),
 ]
