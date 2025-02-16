@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = 'booking_project.User'
 
 # Application definition
 
@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # 3rd-party
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
@@ -47,10 +49,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # local
-    'booking_project.user.apps.UsersConfig',
-    'booking_project.placement.apps.PlacementModelsConfig',
-    'booking_project.booking_info.apps.BookingInfoConfig',
-    'booking_project.reviews.apps.ReviewConfig',
+    'booking_project.apps.BookingProject'
 ]
 
 MIDDLEWARE = [
