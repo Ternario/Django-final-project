@@ -58,3 +58,6 @@ class CustomUserManager(BaseUserManager):
 
     def get_by_natural_key(self, email):
         return self.get(**{self.model.USERNAME_FIELD: email})
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
