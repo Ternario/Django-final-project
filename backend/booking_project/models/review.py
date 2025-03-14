@@ -10,16 +10,16 @@ class Review(models.Model):
     objects = models.Manager()
 
     booking = models.ForeignKey(BookingDetails, on_delete=models.CASCADE, related_name='Booking',
-                                verbose_name="Previous Booking")
+                                verbose_name='Previous Booking')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Author', verbose_name='Author')
     placement = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_review',
                                   verbose_name='placement')
     feedback = models.TextField(max_length=350, validators=[MinLengthValidator(10)],
-                                verbose_name="Feedback")
+                                verbose_name='Feedback')
     rating = models.IntegerField(default=0, validators=[MaxValueValidator(5), MinValueValidator(0)],
-                                 verbose_name="Rating")
-    created_at = models.DateField(auto_now_add=True, verbose_name="Date created")
-    updated_at = models.DateField(auto_now=True, verbose_name="Date updated")
+                                 verbose_name='Rating')
+    created_at = models.DateField(auto_now_add=True, verbose_name='Date created')
+    updated_at = models.DateField(auto_now=True, verbose_name='Date updated')
 
     def __str__(self):
         return f"{self.author}, {self.feedback}"

@@ -19,12 +19,12 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         end_date = data.get('end_date')
 
         if start_date < datetime.today().date():
-            raise serializers.ValidationError("Start date can't be in the past")
+            raise serializers.ValidationError("Start date can't be in the past.")
         if end_date <= start_date:
-            raise serializers.ValidationError("The end date must be at least one day later than the start date ")
+            raise serializers.ValidationError("The end date must be at least one day later than the start date.")
 
         if user == data.get('placement').owner:
-            raise serializers.ValidationError("You can't booking your own apartment")
+            raise serializers.ValidationError("You can't booking your own apartment.")
 
         bookings = BookingDetails.objects.filter(
             placement=placement

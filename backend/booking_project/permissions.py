@@ -1,6 +1,4 @@
-from rest_framework.permissions import BasePermission
-
-SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
 class IsOwnerUser(BasePermission):
@@ -27,7 +25,6 @@ class IsLandLord(BasePermission):
 
 
 class IsOwnerPlacement(BasePermission):
-
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
@@ -38,7 +35,14 @@ class IsOwnerPlacementDetails(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
-        return obj.placement.owner == request.user
+        return obj == request.user
+
+
+class IsOwnerPlacementImages(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        return obj == request.user
 
 
 class IsOwnerBookingPlacement(BasePermission):
