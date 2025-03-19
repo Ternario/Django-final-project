@@ -4,11 +4,13 @@ from booking_project.views.placement_location import LocationRetrieveUpdateView
 from booking_project.views.placement_details import PlacementDetailsRetrieveUpdateView
 from booking_project.views.placement_image import ImageListDestroyAPIView, ImageFirstCreateAPIView
 from booking_project.views.placement import (
-    PlacementCreateView, PlacementListView, PlacementRetrieveUpdateDestroyView, PlacementActivationView
+    PlacementCreateView, PlacementsListView, PlacementRetrieveUpdateDestroyView, PlacementActivationView,
+    InactivePlacementListView, InactivePlacementRetrieveUpdateDestroyView, MyPlacementsListView
 )
 
 urlpatterns = [
-    path('', PlacementListView.as_view(), name='placement-list'),
+    path('', PlacementsListView.as_view(), name='placement-list'),
+    path('my/active/', MyPlacementsListView.as_view(), name='my-active-list'),
     path('create/', PlacementCreateView.as_view(), name='placement-create'),
     path('create-details/<int:placement>/', PlacementDetailsRetrieveUpdateView.as_view(),
          name='placement-create-details'),
@@ -19,4 +21,6 @@ urlpatterns = [
     path('<int:placement>/details/', PlacementDetailsRetrieveUpdateView.as_view(), name='placement-details'),
     path('<int:placement>/location/', LocationRetrieveUpdateView.as_view(), name='placement-location'),
     path('<int:placement>/images/', ImageListDestroyAPIView.as_view(), name='placement-images'),
+    path('my/inactive/', InactivePlacementListView.as_view(), name='my-inactive-list'),
+    path('<int:pk>/inactive/', InactivePlacementRetrieveUpdateDestroyView.as_view(), name="inactive-placement-details")
 ]

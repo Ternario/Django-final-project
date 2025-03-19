@@ -23,9 +23,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -38,8 +37,8 @@ class PlacementCreateTest(PlacementSetup):
         first_response = self.client.post(self.placement_create_url, placement_data, format="json")
 
         self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(first_response.data["title"], "Second Hotel by Landlord User")
-        self.assertEqual(first_response.data["owner"], self.land_lord_user.id)
+        self.assertEqual(first_response.data["title"], "Another Hotel by Landlord User")
+        self.assertEqual(first_response.data["owner"], self.landlord_user.id)
         self.assertEqual(first_response.data["category"], self.hotel_category.id)
         self.assertEqual(Placement.all_objects.count(), 3)
         self.assertEqual(PlacementDetails.objects.count(), 3)
@@ -70,7 +69,7 @@ class PlacementCreateTest(PlacementSetup):
             "coffee_tee_maker": False,
         }
 
-        second_response = self.client.put(self.placement_details_update_url(first_response.data["id"]),
+        second_response = self.client.put(self.placement_details_create_url(first_response.data["id"]),
                                           placement_details_data, format="json")
 
         self.assertEqual(second_response.status_code, status.HTTP_200_OK)
@@ -93,7 +92,7 @@ class PlacementCreateTest(PlacementSetup):
                                           placement_images_data, format="multipart")
 
         self.assertEqual(third_response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(third_response.data["uploaded_images"], "15 image(s) have been successfully added.")
+        self.assertEqual(len(third_response.data["uploaded_images"]), 15)
         self.assertEqual(third_response.data["activate"], "Announcement successfully activated.")
         self.assertTrue(Placement.objects.get(pk=first_response.data["id"]).is_active)
         self.assertEqual(PlacementImage.objects.count(), 31)
@@ -113,9 +112,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -151,7 +149,7 @@ class PlacementCreateTest(PlacementSetup):
             "coffee_tee_maker": False,
         }
 
-        second_response = self.client.put(self.placement_details_update_url(first_response.data["id"]),
+        second_response = self.client.put(self.placement_details_create_url(first_response.data["id"]),
                                           placement_details_data, format="json")
 
         self.assertEqual(second_response.status_code, status.HTTP_200_OK)
@@ -194,9 +192,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -232,7 +229,7 @@ class PlacementCreateTest(PlacementSetup):
             "coffee_tee_maker": False,
         }
 
-        second_response = self.client.put(self.placement_details_update_url(first_response.data["id"]),
+        second_response = self.client.put(self.placement_details_create_url(first_response.data["id"]),
                                           placement_details_data, format="json")
 
         self.assertEqual(second_response.status_code, status.HTTP_200_OK)
@@ -273,9 +270,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -311,7 +307,7 @@ class PlacementCreateTest(PlacementSetup):
             "coffee_tee_maker": False,
         }
 
-        second_response = self.client.put(self.placement_details_update_url(first_response.data["id"]),
+        second_response = self.client.put(self.placement_details_create_url(first_response.data["id"]),
                                           placement_details_data, format="json")
 
         self.assertEqual(second_response.status_code, status.HTTP_200_OK)
@@ -335,47 +331,12 @@ class PlacementCreateTest(PlacementSetup):
                                           placement_images_data, format="multipart")
 
         self.assertEqual(third_response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(third_response.data["uploaded_images"], "15 image(s) have been successfully added.")
+        self.assertEqual(len(third_response.data["uploaded_images"]), 15)
         self.assertEqual(third_response.data["activate"], "You need to fill in the placement details or add photos.")
         self.assertFalse(Placement.all_objects.get(pk=first_response.data["id"]).is_active)
         self.assertFalse(Placement.objects.filter(pk=first_response.data["id"]))
         self.assertEqual(PlacementImage.objects.count(), 31)
         self.assertEqual(PlacementImage.objects.filter(placement=first_response.data["id"]).count(), 15)
-
-    def test_landlord_user_cannot_create_new_placement_without_owner(self):
-        """
-        Test if landlord user cannot create new Placement without owner field.
-        Sends a POST request with empty owner field and expects a 400 BAD REQUEST response.
-        Verifies that the number of placement, placement location, placement details has not increased.
-        """
-
-        placement_data = {
-            "placement_location": {
-                "country": "Germany",
-                "city": "Berlin",
-                "post_code": "34567",
-                "street": "Test street",
-                "house_number": "4"
-            },
-            "owner": "",
-            "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
-            "description": "A" * 60,
-            "price": 123,
-            "number_of_rooms": 2,
-            "placement_area": 40,
-            "total_beds": 2,
-            "single_bed": 1,
-            "double_bed": 1,
-        }
-
-        response = self.client.post(self.placement_create_url, placement_data, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data["owner"][0], "This field may not be null.")
-        self.assertEqual(Placement.all_objects.count(), 2)
-        self.assertEqual(PlacementLocation.objects.count(), 2)
-        self.assertEqual(PlacementDetails.objects.count(), 2)
 
     def test_landlord_user_cannot_create_new_placement_without_category(self):
         """
@@ -392,9 +353,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": "",
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -420,9 +380,8 @@ class PlacementCreateTest(PlacementSetup):
         """
 
         placement_data = {
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -455,9 +414,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "",
                 "house_number": ""
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -496,7 +454,6 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "A" * 156,
                 "house_number": "A" * 31
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
             "title": "A" * 256,
             "description": "A" * 2001,
@@ -538,9 +495,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 39,
             "price": 123,
             "number_of_rooms": 2,
@@ -576,9 +532,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 100000,
             "number_of_rooms": 7,
@@ -617,9 +572,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 9.99,
             "number_of_rooms": 0,
@@ -655,9 +609,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -690,9 +643,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -724,9 +676,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -758,9 +709,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,
@@ -798,9 +748,8 @@ class PlacementCreateTest(PlacementSetup):
                 "street": "Test street",
                 "house_number": "4"
             },
-            "owner": self.land_lord_user.id,
             "category": self.hotel_category.id,
-            "title": "Second Hotel by Landlord User",
+            "title": "Another Hotel by Landlord User",
             "description": "A" * 60,
             "price": 123,
             "number_of_rooms": 2,

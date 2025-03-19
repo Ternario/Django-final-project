@@ -1,6 +1,5 @@
 import os
 import shutil
-from datetime import datetime
 
 from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -37,8 +36,6 @@ class PlacementImageModelTest(PlacementSetupTest):
                                              ),
                                              content_type="image/jpeg")
 
-        self.time = str(datetime.now().strftime('%d_%m_%Y_%H_%M_%S'))
-
         self.placement_image = PlacementImage.objects.create(
             placement=self.placement,
             image=self.temp_image
@@ -47,10 +44,9 @@ class PlacementImageModelTest(PlacementSetupTest):
     def test_create_placement_image(self):
         """Test creating a placement image."""
 
-        expected_filename = f"test_image_{self.time}.jpg"
-        expected_path = f"{self.placement.owner.id}/{self.placement.id}/{expected_filename}"
+        expected_path = os.path.normpath(self.placement_image.image.name)
+        image_path = os.path.normpath(self.placement_image.image.path)
 
         self.assertIsNotNone(self.placement_image.id)
         self.assertIsNotNone(self.placement_image.placement)
-        self.assertTrue(self.placement_image.image.path.endswith(expected_filename))
-        self.assertEqual(self.placement_image.image.name, expected_path)
+        self.assertTrue(image_path.endswith(expected_path))

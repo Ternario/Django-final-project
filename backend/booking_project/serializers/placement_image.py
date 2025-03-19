@@ -5,24 +5,30 @@ from booking_project.models import PlacementImage
 from booking_project.constants.constants_for_image import MAX_SIZE, ALLOWED_FORMATS
 
 
-class PlacementImageFirstCreateSerializer(serializers.Serializer):
+class PlacementImageSerializer(serializers.ModelSerializer):
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(allow_empty_file=False),
         write_only=True,
         required=True
     )
 
+    class Meta:
+        model = PlacementImage
+        fields = '__all__'
+        read_only_fields = ['image', 'placement']
+
     def create(self, validated_data):
         uploaded_images = validated_data.pop('uploaded_images')
         placement = self.context['placement']
+        request = self.context['request']
 
-        created_images = 0
+        created_images = []
 
         for image in uploaded_images:
-            PlacementImage.objects.create(placement=placement, image=image)
-            created_images += 1
+            image = PlacementImage.objects.create(placement=placement, image=image)
+            created_images.append(request.build_absolute_uri(image.image.url))
 
-        return f'{created_images} image(s) have been successfully added.'
+        return created_images
 
     def validate_uploaded_images(self, uploaded_images):
         placement = self.context['placement']
@@ -38,14 +44,14 @@ class PlacementImageFirstCreateSerializer(serializers.Serializer):
         allowed_number = 15 - total_images
 
         if allowed_number == 0:
-            raise serializers.ValidationError(f'You cannot add new images.')
+            raise serializers.ValidationError(f'You have reached your image limit.')
 
         if len(uploaded_images) > allowed_number:
-            raise serializers.ValidationError(f'You can add only {allowed_number} more image(s)')
+            raise serializers.ValidationError(f'You can add only {allowed_number} more image(s).')
 
         for image in uploaded_images:
             if image.size > MAX_SIZE:
-                raise serializers.ValidationError(f'Each image must be smaller than 5 MB.')
+                raise serializers.ValidationError(f'Each image must be smaller than 10 MB.')
 
             img = Image.open(image)
 
@@ -54,40 +60,3 @@ class PlacementImageFirstCreateSerializer(serializers.Serializer):
                     f'Image format must be one of the following: {', '.join(ALLOWED_FORMATS)}')
 
         return uploaded_images
-
-
-class PlacementImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PlacementImage
-        fields = '__all__'
-
-
-class PlacementImageDestroySerializer(serializers.Serializer):
-    image_list = serializers.ListField(
-        child=serializers.ImageField(),
-        required=True,
-        write_only=True
-    )
-
-    def validate_image_list(self, value):
-        if not value:
-            raise serializers.ValidationError('Image list cannot be empty.')
-
-        images = PlacementImage.objects.filter(id__in=value)
-
-        if not images.exists():
-            raise serializers.ValidationError('No matching images found.')
-
-        user = self.context['request'].user
-        unauthorized_images = images.exclude(placement__owner=user)
-
-        if unauthorized_images.exists():
-            raise serializers.ValidationError('You can only delete your own images.')
-
-        return value
-
-    def delete_images(self):
-        image_list = self.validated_data['image_list']
-        deleted_count, _ = PlacementImage.objects.filter(id__in=image_list).delete()
-
-        return f'successfully deleted {deleted_count} image(s).'

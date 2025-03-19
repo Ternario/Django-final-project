@@ -3,12 +3,13 @@ import os
 import shutil
 
 from PIL import Image
+
 from django.conf import settings
+from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from rest_framework.test import APITestCase, APIClient
-from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.test import APITestCase, APIClient
 
 from booking_project.models import User, Placement, Category, PlacementDetails, PlacementImage, PlacementLocation
 
@@ -37,141 +38,23 @@ class PlacementSetup(APITestCase):
         super().tearDownClass()
         shutil.rmtree(cls.test_media, ignore_errors=True)
 
-    # @classmethod
-    # def setUpTestData(cls):
-    #     cls.land_lord_user = User.objects.create(
-    #         email="landlorduser@example.com",
-    #         first_name="User",
-    #         last_name="User",
-    #         username="FirstUser",
-    #         phone="+1234567899",
-    #         password="userpassword",
-    #         is_landlord=True
-    #     )
-    #
-    #     cls.regular_user = User.objects.create(
-    #         email="user@example.com",
-    #         first_name="User",
-    #         last_name="User",
-    #         username="SecondUser",
-    #         phone="+1234568999",
-    #         password="userpassword",
-    #         is_landlord=False
-    #     )
-    #
-    #     cls.hotel_category = Category.objects.create(name="Hotels")
-    #     cls.hostel_category = Category.objects.create(name="Hostels")
-    #
-    #     cls.placement = Placement.objects.create(
-    #         owner=cls.land_lord_user,
-    #         category=cls.hotel_category,
-    #         title="First Hotel by Landlord User",
-    #         description="A" * 50,
-    #         price=250,
-    #         number_of_rooms=2,
-    #         placement_area=43.5,
-    #         total_beds=3,
-    #         single_bed=2,
-    #         double_bed=1,
-    #         is_active=True
-    #     )
-    #
-    #     cls.placement_location = PlacementLocation.objects.create(
-    #         placement=cls.placement,
-    #         country="Test Country",
-    #         city="Test city",
-    #         post_code="10405",
-    #         street="Test street",
-    #         house_number="1"
-    #     )
-    #
-    #     cls.placement_details = PlacementDetails.objects.create(
-    #         placement=cls.placement,
-    #         pets=True,
-    #         free_wifi=False,
-    #         smoking=False,
-    #         parking=False,
-    #         room_service=True,
-    #         front_desk_allowed_24=False,
-    #         free_cancellation=False,
-    #         balcony=True,
-    #         air_conditioning=False,
-    #         washing_machine=False,
-    #         kitchenette=False,
-    #         tv=False,
-    #         coffee_tee_maker=True
-    #     )
-    #
-    #     cls.placement_images = PlacementImage.objects.bulk_create([
-    #         PlacementImage(placement=cls.placement, image=create_fake_image()) for _ in range(8)
-    #     ])
-    #
-    #     cls.inactive_placement = Placement.objects.create(
-    #         owner=cls.land_lord_user,
-    #         category=cls.hostel_category,
-    #         title="First Hostel by Landlord User",
-    #         description="A" * 50,
-    #         price=250,
-    #         number_of_rooms=2,
-    #         placement_area=43.5,
-    #         total_beds=3,
-    #         single_bed=2,
-    #         double_bed=1,
-    #         is_active=False
-    #     )
-    #
-    #     cls.inactive_placement_location = PlacementLocation.objects.create(
-    #         placement=cls.inactive_placement,
-    #         country="Test Country",
-    #         city="Test city",
-    #         post_code="10405",
-    #         street="Test street",
-    #         house_number="1"
-    #     )
-    #
-    #     cls.inactive_placement_details = PlacementDetails.objects.create(
-    #         placement=cls.inactive_placement,
-    #         pets=True,
-    #         free_wifi=False,
-    #         smoking=False,
-    #         parking=False,
-    #         room_service=True,
-    #         front_desk_allowed_24=False,
-    #         free_cancellation=False,
-    #         balcony=True,
-    #         air_conditioning=False,
-    #         washing_machine=False,
-    #         kitchenette=False,
-    #         tv=False,
-    #         coffee_tee_maker=True
-    #     )
-    #
-    #     cls.inactive_placement_images = PlacementImage.objects.bulk_create([
-    #         PlacementImage(placement=cls.inactive_placement, image=create_fake_image()) for _ in range(8)
-    #     ])
-    #
-    #     cls.temp_images_set1 = [create_fake_image() for _ in range(15)]
-    #     cls.temp_images_set2 = [create_fake_image() for _ in range(16)]
-    #
-    #     cls.placement_active_list_url = reverse("placement-list")
-    #
-    #     cls.placement_create_url = reverse("placement-create")
-    #     cls.placement_details_update_url = lambda pk: reverse("placement-create-details", kwargs={"placement": pk})
-    #     cls.placement_images_create_url = lambda pk: reverse("placement-create-images", kwargs={"placement": pk})
-    #     cls.placement_activation = lambda pk: reverse("placement-activation", kwargs={"pk": pk})
-    #
-    #     cls.placement_retrieve_update_delete_url = lambda pk: reverse("placement", kwargs={"pk": pk})
-    #     cls.placement_details_retrieve_update_url = lambda pk: reverse("placement-details", kwargs={"placement": pk})
-    #     cls.placement_location_retrieve_update_url = lambda pk: reverse("placement-location", kwargs={"placement": pk})
-    #     cls.placement_image_retrieve_update_url = lambda pk: reverse("placement-images", kwargs={"placement": pk})
-
     def setUp(self):
-        self.land_lord_user = User.objects.create(
+        self.landlord_user = User.objects.create(
             email="landlorduser@example.com",
             first_name="User",
             last_name="User",
-            username="FirstUser",
+            username="FirstLandlordUser",
             phone="+1234567899",
+            password="userpassword",
+            is_landlord=True
+        )
+
+        self.landlord_user2 = User.objects.create(
+            email="secondlandlorduser@example.com",
+            first_name="User",
+            last_name="User",
+            username="SecondLandlordUser",
+            phone="+123907899",
             password="userpassword",
             is_landlord=True
         )
@@ -180,7 +63,7 @@ class PlacementSetup(APITestCase):
             email="user@example.com",
             first_name="User",
             last_name="User",
-            username="SecondUser",
+            username="FirstRegularUser",
             phone="+1234568999",
             password="userpassword",
             is_landlord=False
@@ -190,7 +73,7 @@ class PlacementSetup(APITestCase):
         self.hostel_category = Category.objects.create(name="Hostels")
 
         self.placement = Placement.objects.create(
-            owner=self.land_lord_user,
+            owner=self.landlord_user,
             category=self.hotel_category,
             title="First Hotel by Landlord User",
             description="A" * 50,
@@ -206,7 +89,7 @@ class PlacementSetup(APITestCase):
         self.placement_location = PlacementLocation.objects.create(
             placement=self.placement,
             country="Test Country",
-            city="Test city",
+            city="Test first city",
             post_code="10405",
             street="Test street",
             house_number="1"
@@ -234,7 +117,7 @@ class PlacementSetup(APITestCase):
         ])
 
         self.inactive_placement = Placement.objects.create(
-            owner=self.land_lord_user,
+            owner=self.landlord_user,
             category=self.hostel_category,
             title="First Hostel by Landlord User",
             description="A" * 50,
@@ -280,20 +163,28 @@ class PlacementSetup(APITestCase):
         self.temp_images_set1 = [create_fake_image() for _ in range(15)]
         self.temp_images_set2 = [create_fake_image() for _ in range(16)]
 
+        self.add_temp_images_set1 = [create_fake_image() for _ in range(7)]
+
         self.placement_active_list_url = reverse("placement-list")
 
         self.placement_create_url = reverse("placement-create")
-        self.placement_details_update_url = lambda pk: reverse("placement-create-details", kwargs={"placement": pk})
+        self.placement_details_create_url = lambda pk: reverse("placement-create-details", kwargs={"placement": pk})
         self.placement_images_create_url = lambda pk: reverse("placement-create-images", kwargs={"placement": pk})
         self.placement_activation = lambda pk: reverse("placement-activation", kwargs={"pk": pk})
 
         self.placement_retrieve_update_delete_url = lambda pk: reverse("placement", kwargs={"pk": pk})
         self.placement_details_retrieve_update_url = lambda pk: reverse("placement-details", kwargs={"placement": pk})
         self.placement_location_retrieve_update_url = lambda pk: reverse("placement-location", kwargs={"placement": pk})
-        self.placement_image_retrieve_update_url = lambda pk: reverse("placement-images", kwargs={"placement": pk})
+        self.placement_image_retrieve_delete_url = lambda pk: reverse("placement-images", kwargs={"placement": pk})
+
+        self.my_active_placement_list_url = reverse("my-active-list")
+
+        self.my_inactive_placement_list_url = reverse("my-inactive-list")
+        self.inactive_placement_retrieve_update_delete_url = lambda pk: reverse("inactive-placement-details",
+                                                                                kwargs={"pk": pk})
 
         self.client = APIClient()
 
-        refresh = RefreshToken.for_user(self.land_lord_user)
+        refresh = RefreshToken.for_user(self.landlord_user)
         self.client.cookies["access_token"] = str(refresh.access_token)
         self.client.cookies["refresh_token"] = str(refresh)

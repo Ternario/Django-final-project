@@ -19,11 +19,13 @@ class PlacementCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Placement
         exclude = ['updated_at', 'is_active', 'is_deleted']
+        read_only_fields = ['owner']
 
     def create(self, validated_data):
+        user = self.context['user']
         location = validated_data.pop('placement_location', None)
 
-        placement = Placement.objects.create(**validated_data)
+        placement = Placement.objects.create(owner=user, **validated_data)
 
         PlacementLocation.objects.create(placement=placement, **location)
 
@@ -82,10 +84,17 @@ class PlacementActivationSerializer(serializers.Serializer):
         return True
 
 
-class PlacementBaseDetailSerializer(serializers.ModelSerializer):
+class PlacementBaseDetailsSerializer(serializers.ModelSerializer):
     city = serializers.SerializerMethodField('get_city')
     placement_image = PlacementImageSerializer(many=True)
     rating = serializers.SerializerMethodField('avg_rating')
+
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Placement
+        exclude = ['is_active', 'owner', 'is_deleted', 'updated_at', 'category']
+
 
     def get_city(self, obj):
         city = PlacementLocation.objects.get(placement=obj.pk)
@@ -95,25 +104,53 @@ class PlacementBaseDetailSerializer(serializers.ModelSerializer):
         count = Review.objects.filter(placement=obj).aggregate(Avg('rating'))
         return count['rating__avg'] if count['rating__avg'] else 0
 
-    class Meta:
-        model = Placement
-        exclude = ['is_active', 'owner', 'is_deleted']
 
-
-class PlacementSerializer(serializers.ModelSerializer):
+class PlacementAllDetailsSerializer(serializers.ModelSerializer):
     rating = serializers.SerializerMethodField('avg_rating')
     placement_details = serializers.SerializerMethodField('details')
     placement_location = serializers.SerializerMethodField('location')
     placement_image = PlacementImageSerializer(many=True, read_only=True)
 
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Placement
+        exclude = ['owner', 'is_active', 'is_deleted']
+        read_only_fields = ['created_at', 'updated_at', 'rating', 'placement_image', 'placement_location',
+                            'placement_details', 'id']
+
+    def details(self, obj):
+        return PlacementDetailSerializer(PlacementDetails.objects.get(placement=obj.pk)).data
+
+    def location(self, obj):
+        return LocationSerializer(PlacementLocation.objects.get(placement=obj.pk)).data
+
+    def avg_rating(self, obj):
+        count = Review.objects.filter(placement=obj).aggregate(Avg('rating'))
+        return count['rating__avg'] if count['rating__avg'] else 0
+
+
+class PlacementSerializer(serializers.ModelSerializer):
     category = serializers.IntegerField(write_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
 
     class Meta:
         model = Placement
         exclude = ['owner', 'is_active', 'is_deleted']
-        read_only_fields = ['created_at', 'updated_at', 'rating', 'city', 'rating',
-                            'placement_image', 'placement_details', 'id']
+        read_only_fields = ['created_at', 'updated_at', 'id']
+
+    def validate(self, attrs):
+        total_beds = attrs.get('total_beds')
+        single_bed = attrs.get('single_bed')
+        double_bed = attrs.get('double_bed')
+
+        if single_bed == 0 and double_bed == 0:
+            raise serializers.ValidationError('Both bed fields can\'t be zero.')
+
+        if total_beds != single_bed + double_bed:
+            raise serializers.ValidationError('Both bed fields must be equal to the total beds.')
+
+        return attrs
 
     def validate_category(self, value):
         try:
@@ -125,13 +162,3 @@ class PlacementSerializer(serializers.ModelSerializer):
 
     def get_category_name(self, obj):
         return obj.category.name if obj.category else None
-
-    def details(self, obj):
-        return PlacementDetailSerializer(PlacementDetails.objects.get(placement=obj.pk)).data
-
-    def location(self, obj):
-        return LocationSerializer(PlacementLocation.objects.get(placement=obj.pk)).data
-
-    def avg_rating(self, obj):
-        count = Review.objects.filter(placement=obj).aggregate(Avg('rating'))
-        return count['rating__avg'] if count['rating__avg'] else 0
