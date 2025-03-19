@@ -14,27 +14,27 @@ from booking_project.utils.cookies_manager import set_jwt_cookies
 
 class UserCreateView(CreateAPIView):
     """
-        View for registration a user.
+    View for registration a user.
 
-        Example of POST request:
-        POST /auth/
-        {
-            "email": "newuser@example.com",
-            "first_name": "newuser",
-            "last_name": "newuser",
-            "username": "newuser",
-            "phone": "+1112223344",
-            "password": "newuserpassword",
-            "re_password": "newuserpassword"
-        }
+    Example of POST request:
+    POST /auth/
+    {
+        "email": "newuser@example.com",
+        "first_name": "newuser",
+        "last_name": "newuser",
+        "username": "newuser",
+        "phone": "+1112223344",
+        "password": "newuserpassword",
+        "re_password": "newuserpassword"
+    }
 
-        Response:
-        {
-            "detail": "User successfully created."
-        }
+    Response:
+    {
+       "detail": "User successfully created."
+    }
 
-        Permissions:
-            - AllowAny: This view is accessible without any authentication.
+    Permissions:
+         - AllowAny: This view is accessible without any authentication.
     """
 
     permission_classes = [AllowAny]
@@ -54,24 +54,24 @@ class UserCreateView(CreateAPIView):
 
 class UserBaseDetailsRetrieveView(RetrieveAPIView):
     """
-        View for retrieving basic info about user account.
+    View for retrieving basic info about user account.
 
-        Example of GET request:
-        GET /user/base/
-        Response:
-        {
-            "id": "1",
-            "email": "newuser@example.com",
-            "first_name": "newuser",
-            "last_name": "newuser",
-            "username": "newuser",
-        }
+    Example of GET request:
+    GET /user/base/
+    Response:
+    {
+        "id": "1",
+        "email": "newuser@example.com",
+        "first_name": "newuser",
+        "last_name": "newuser",
+        "username": "newuser",
+    }
 
-        Permissions:
-            - No special permissions required, but the user must be authenticated.
+    Permissions:
+        - The user must be authenticated.
 
-        NOTE:
-         - Each user has access only to his own account
+    NOTE:
+        - Each user has access only to his own account
     """
 
     permission_classes = [IsOwnerUser, IsAuthenticated]
@@ -83,78 +83,78 @@ class UserBaseDetailsRetrieveView(RetrieveAPIView):
         return user
 
 
-class UserDetailsUpdateDeleteView(RetrieveUpdateDestroyAPIView):
+class UserRetrieveUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     """
-        View for retrieving, updating, or deleting a user.
+    View for retrieving, updating, or deleting a user.
 
-        Example of GET request:
-        GET /user/
-        Response:
-        {
-            "id": "1",
-            "email": "user@example.com",
-            "first_name": "user",
-            "last_name": "user",
-            "username": "user",
-            "phone": "+123456789",
-            "date_of_birth": "01.02.2025",
-            "is_landlord": True (default = False)
-        }
+    Example of GET request:
+    GET /user/
+    Response:
+    {
+        "id": "1",
+        "email": "user@example.com",
+        "first_name": "user",
+        "last_name": "user",
+        "username": "user",
+        "phone": "+123456789",
+        "date_of_birth": "01.02.2025",
+        "is_landlord": True (default = False)
+    }
 
-        Example of PUT request to update a user:
-        PUT /user/
-        {
-            "email": "user@example.com",
-            "first_name": "updateduser",
-            "last_name": "updateduser",
-            "username": "updateduser",
-            "phone": "+123456789",
-            "date_of_birth": "01-02-2020",
-            "is_landlord": True (default = False)
+    Example of PUT request to update a user:
+    PUT /user/
+    {
+        "email": "user@example.com",
+        "first_name": "updateduser",
+        "last_name": "updateduser",
+        "username": "updateduser",
+        "phone": "+123456789",
+        "date_of_birth": "01-02-2020",
+        "is_landlord": True (default = False)
 
-        }
+    }
 
-        Response:
-        {
-            "id": "1",
-            "email": "user@example.com",
-            "first_name": "updateduser",
-            "last_name": "updateduser",
-            "username": "updateduser",
-            "phone": "+123456789",
-            "date_of_birth": "01-02-2020",
-            "is_landlord": True,
-            "date_joined": join date
-        }
+    Response:
+    {
+        "id": "1",
+        "email": "user@example.com",
+        "first_name": "updateduser",
+        "last_name": "updateduser",
+        "username": "updateduser",
+        "phone": "+123456789",
+        "date_of_birth": "01-02-2020",
+        "is_landlord": True,
+        "date_joined": join date
+    }
 
-        Example of PATCH request to partially update a user:
-        PATCH /user/
-        {
-            "first_name": "partiallyupdateduser",  # Optional field update
-        }
+    Example of PATCH request to partially update a user:
+    PATCH /user/
+    {
+        "first_name": "partiallyupdateduser",  # Optional field update
+    }
 
-        Response:
-        {
-            "id": "1",
-            "email": "user@example.com",
-            "first_name": "partiallyupdateduser",
-            "last_name": "updateduser",
-            "username": "updateduser",
-            "phone": "+123456789",
-            "date_of_birth": "01-02-2020",
-            "is_landlord": True,
-            "date_joined": join date
-        }
+    Response:
+    {
+        "id": "1",
+        "email": "user@example.com",
+        "first_name": "partiallyupdateduser",
+        "last_name": "updateduser",
+        "username": "updateduser",
+        "phone": "+123456789",
+        "date_of_birth": "01-02-2020",
+        "is_landlord": True,
+        "date_joined": join date
+    }
 
-        Example of DELETE request:
-        DELETE /user/
-        Response: 204 No Content
+    Example of DELETE request:
+    DELETE /user/
+    Response: 204 No Content
 
-        Permissions:
-            - No special permissions required, but the user must be authenticated.
+    Permissions:
+        - The user must be authenticated.
 
-        NOTE:
-         - Each user has access only to his own account
+    NOTE:
+     - Each user has access only to his own account
     """
 
     permission_classes = [IsOwnerUser, IsAuthenticated]
@@ -179,28 +179,28 @@ class UserDetailsUpdateDeleteView(RetrieveUpdateDestroyAPIView):
 
 class UserLoginView(CreateAPIView):
     """
-        View for authenticating a user and returning JWT tokens as cookies.
+    View for authenticating a user and returning JWT tokens as cookies.
 
-        Example of POST request:
-        POST /auth/login/
-        {
-            "email": "user@example.com",
-            "password": "user password"
-        }
+    Example of POST request:
+    POST /auth/login/
+    {
+        "email": "user@example.com",
+        "password": "user password"
+    }
 
-        On successful authentication, this view sets JWT access and refresh tokens
-        as cookies in the response.
+    On successful authentication, this view sets JWT access and refresh tokens
+    as cookies in the response.
 
-        Permissions:
-            - AllowAny: This view is accessible without any authentication.
+    Permissions:
+        - AllowAny: This view is accessible without any authentication.
 
-        Response on success:
-        - Status: 200 OK
-        - Cookies: JWT access and refresh tokens
+    Response on success:
+    - Status: 200 OK
+    - Cookies: JWT access and refresh tokens
 
-        Response on failure:
-        - Status: 401 Unauthorized
-        - Body: {"detail": "Invalid credentials"}
+    Response on failure:
+    - Status: 401 Unauthorized
+    - Body: {"detail": "Invalid credentials"}
     """
 
     permission_classes = [AllowAny]
@@ -225,28 +225,30 @@ class UserLoginView(CreateAPIView):
 
 class LogoutUserView(APIView):
     """
-        View for logging out the currently authenticated user.
+    View for logging out the currently authenticated user.
 
-        This view logs out the user and deletes the JWT access and refresh tokens
-        from the cookies.
+    This view logs out the user and deletes the JWT access and refresh tokens
+    from the cookies.
 
-        Example of POST request:
-        POST /auth/Logout/
-        {
-            No request body required
-        }
+    Example of POST request:
+    POST /auth/Logout/
+    {
+        No request body required
+    }
 
-        Permissions:
-            - No special permissions required, but the user must be authenticated.
+    Permissions:
+        - The user must be authenticated.
 
-        Response on success:
-        - Status: 200 OK
-        - Cookies: JWT access and refresh tokens are deleted
+    Response on success:
+    - Status: 200 OK
+    - Cookies: JWT access and refresh tokens are deleted
 
-        Note:
-        - If no user is authenticated, the view still returns a 200 OK status,
-        but no actions are performed.
+    Note:
+    - If no user is authenticated, the view still returns a 200 OK status,
+    but no actions are performed.
     """
+
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         response = Response(status=status.HTTP_200_OK)

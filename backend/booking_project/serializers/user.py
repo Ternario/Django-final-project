@@ -20,7 +20,7 @@ def validate_user_data(data):
         raise serializers.ValidationError(
             {'last_name': 'The Last Name must be alphabet characters and can contain up to two dashes.'}
         )
-    if phone and not re.fullmatch(r'^\+[1-9]\s*\(?\d+\)?\s*\d+(?:[-\s]*\d+)*$', phone):
+    if phone and not re.match(r'^\+[1-9]\s*\(?\d+\)?\s*\d+(?:[-\s]*\d+)*$', phone):
         raise serializers.ValidationError(
             {'phone': 'The Phone Number must start with "+" and contain from 7 to 21 digits'}
         )

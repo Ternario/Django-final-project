@@ -56,7 +56,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.put(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "updateduser@example.com")
@@ -81,7 +80,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.put(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["email"][0], "user with this Email already exists.")
@@ -104,7 +102,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.put(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["username"][0], "user with this Username already exists.")
@@ -127,7 +124,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.put(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["phone"][0], "user with this Phone number already exists.")
@@ -148,7 +144,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.patch(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["email"], "partialupdateduser@example.com")
@@ -170,7 +165,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.put(self.user_retrieve_base_detail_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data["detail"], "Method \"PUT\" not allowed.")
@@ -192,7 +186,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         }
 
         response = self.client.patch(self.user_retrieve_base_detail_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data["detail"], "Method \"PATCH\" not allowed.")
@@ -217,7 +210,6 @@ class UserRetrieveUpdateDeleteTests(UserApiTests):
         self.client.cookies.clear()
 
         response = self.client.put(self.user_retrieve_update_delete_url, data, format="json")
-        self.user.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(response.data["detail"], "Authentication credentials were not provided.")

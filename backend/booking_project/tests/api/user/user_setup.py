@@ -38,8 +38,8 @@ class UserApiTests(APITestCase):
         self.client = APIClient()
 
         refresh = RefreshToken.for_user(self.user)
-        self.client.cookies['access_token'] = str(refresh.access_token)
-        self.client.cookies['refresh_token'] = str(refresh)
+        self.client.cookies["access_token"] = str(refresh.access_token)
+        self.client.cookies["refresh_token"] = str(refresh)
 
         self.user_create_url = reverse("user-create")
 
