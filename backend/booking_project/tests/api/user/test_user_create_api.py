@@ -21,7 +21,10 @@ class UserCreateTests(UserApiTests):
             "re_password": "newuserpassword"
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["detail"], "User successfully created.")
         self.assertEqual(User.objects.count(), 3)
@@ -43,6 +46,8 @@ class UserCreateTests(UserApiTests):
             "password": "newuserpassword",
             "re_password": "newuserpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 
@@ -68,6 +73,8 @@ class UserCreateTests(UserApiTests):
             "re_password": "newuserpassword"
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -90,6 +97,8 @@ class UserCreateTests(UserApiTests):
             "password": "newuserpassword",
             "re_password": "newuserpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 
@@ -114,6 +123,8 @@ class UserCreateTests(UserApiTests):
             "re_password": "newuserpassword"
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -136,6 +147,8 @@ class UserCreateTests(UserApiTests):
             "password": "newuserpassword",
             "re_password": "newuserpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 
@@ -160,6 +173,8 @@ class UserCreateTests(UserApiTests):
             "re_password": "newuserpassword"
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -182,6 +197,8 @@ class UserCreateTests(UserApiTests):
             "password": "newuserpassword",
             "re_password": "newuserpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 
@@ -206,6 +223,8 @@ class UserCreateTests(UserApiTests):
             "re_password": "newuserpassword"
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -228,6 +247,8 @@ class UserCreateTests(UserApiTests):
             "password": "",
             "re_password": "newuserpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 
@@ -252,6 +273,8 @@ class UserCreateTests(UserApiTests):
             "re_password": ""
         }
 
+        self.client.cookies.clear()
+
         response = self.client.post(self.user_create_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -275,6 +298,8 @@ class UserCreateTests(UserApiTests):
             "password": "newuserpassword",
             "re_password": "wrongpassword"
         }
+
+        self.client.cookies.clear()
 
         response = self.client.post(self.user_create_url, data, format="json")
 

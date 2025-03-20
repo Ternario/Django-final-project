@@ -52,6 +52,7 @@ class UserLoginLogoutTests(UserApiTests):
         """
 
         refresh = RefreshToken.for_user(self.user)
+
         self.client.cookies["access_token"] = str(refresh.access_token)
         self.client.cookies["refresh_token"] = str(refresh)
 
