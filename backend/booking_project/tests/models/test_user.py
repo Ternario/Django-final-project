@@ -29,6 +29,25 @@ class UserModelTest(TestCase):
         self.assertEqual(self.user.username, "Admin")
         self.assertEqual(self.user.phone, "+123456789")
 
+    def test_model_cannot_be_created_without_required_fields(self):
+        """Test user model cannot  be created without email, first_name, last_name or phone field"""
+
+        new_user = User(
+            email=None,
+            first_name=None,
+            last_name=None,
+            username="Example",
+            phone=None
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            new_user.full_clean()
+        error_message = str(context.exception)
+        self.assertIn("email", error_message)
+        self.assertIn("first_name", error_message)
+        self.assertIn("last_name", error_message)
+        self.assertIn("phone", error_message)
+
     def test_email_uniqueness(self):
         """Check email uniqueness"""
 
@@ -78,7 +97,7 @@ class UserModelTest(TestCase):
         self.assertIn("User with this Phone number already exists.", error_message)
 
     def test_fields_max_length(self):
-        """Check the maximum length of the fields first_name, last_name, username, phone"""
+        """Test the maximum length of the fields first_name, last_name, username, phone"""
 
         new_user = User(
             email="user@example.com",
@@ -97,7 +116,7 @@ class UserModelTest(TestCase):
         self.assertIn("phone", error_message)
 
     def test_phone_min_length(self):
-        """Check the minimal length of the field phone"""
+        """Test the minimal length of the field phone"""
 
         new_user = User(
             email="user@example.com",
@@ -113,7 +132,7 @@ class UserModelTest(TestCase):
         self.assertIn("Ensure this value has at least 7 characters (it has 6).", error_message)
 
     def test_invalid_email(self):
-        """Check that an invalid email causes a ValidationError"""
+        """Test that the invalid email causes a ValidationError"""
 
         new_user = User(
             email="user-example.com",

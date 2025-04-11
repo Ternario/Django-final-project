@@ -86,8 +86,8 @@ class PlacementSearchTest(PlacementSetup):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Placement.objects.all().count())
-        self.assertEqual(response.data[0]["created_at"], self.placement3.created_at.isoformat())
-        self.assertEqual(response.data[-1]["created_at"], self.placement.created_at.isoformat())
+        self.assertEqual(response.data[0]["created_at"], self.placement3.created_at.strftime("%d-%m-%Y"))
+        self.assertEqual(response.data[-1]["created_at"], self.placement.created_at.strftime("%d-%m-%Y"))
 
     def test_user_retrieve_active_placements_list_by_creation_date_asc(self):
         """
@@ -100,8 +100,8 @@ class PlacementSearchTest(PlacementSetup):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Placement.objects.all().count())
-        self.assertEqual(response.data[0]["created_at"], self.placement.created_at.isoformat())
-        self.assertEqual(response.data[-1]["created_at"], self.placement3.created_at.isoformat())
+        self.assertEqual(response.data[0]["created_at"], self.placement.created_at.strftime("%d-%m-%Y"))
+        self.assertEqual(response.data[-1]["created_at"], self.placement3.created_at.strftime("%d-%m-%Y"))
 
     def test_user_retrieve_active_placements_list_by_text(self):
         """

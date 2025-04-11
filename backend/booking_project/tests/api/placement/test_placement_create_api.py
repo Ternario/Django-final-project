@@ -426,14 +426,13 @@ class PlacementCreateTest(PlacementSetup):
         }
 
         response = self.client.post(self.placement_create_url, placement_data, format="json")
-        response_message = str(response.data["placement_location"])
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("country", response_message)
-        self.assertIn("city", response_message)
-        self.assertIn("post_code", response_message)
-        self.assertIn("street", response_message)
-        self.assertIn("house_number", response_message)
+        self.assertEqual(response.data["placement_location"]["country"][0], "This field may not be blank.")
+        self.assertEqual(response.data["placement_location"]["city"][0], "This field may not be blank.")
+        self.assertEqual(response.data["placement_location"]["post_code"][0], "This field may not be blank.")
+        self.assertEqual(response.data["placement_location"]["street"][0], "This field may not be blank.")
+        self.assertEqual(response.data["placement_location"]["house_number"][0], "This field may not be blank.")
         self.assertEqual(Placement.all_objects.count(), 2)
         self.assertEqual(PlacementLocation.objects.count(), 2)
         self.assertEqual(PlacementDetails.objects.count(), 2)

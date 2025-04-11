@@ -1,10 +1,9 @@
 from rest_framework import status, serializers
 from rest_framework.generics import CreateAPIView, get_object_or_404, ListCreateAPIView, DestroyAPIView
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from booking_project.models import Placement
-from booking_project.permissions import OnlyOwnerPlacementRelatedModels, IsLandLord, OnlyOwnerPlacement
+from booking_project.permissions import IsOwnerPlacementRelatedModels, IsOwnerPlacement
 from booking_project.models.placement_image import PlacementImage
 from booking_project.serializers.placement import PlacementActivationSerializer
 from booking_project.serializers.placement_image import PlacementImageSerializer
@@ -34,7 +33,7 @@ class ImageFirstCreateAPIView(CreateAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacement, IsAuthenticated]
+    permission_classes = [IsOwnerPlacement]
     serializer_class = PlacementImageSerializer
 
     def create(self, request, *args, **kwargs):
@@ -112,6 +111,12 @@ class ImageListDestroyAPIView(ListCreateAPIView, DestroyAPIView):
 
     serializer_class = PlacementImageSerializer
 
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsOwnerPlacement()]
+
+        return [IsOwnerPlacementRelatedModels()]
+
     def get_queryset(self):
         placement = self.kwargs['placement']
 
@@ -131,12 +136,6 @@ class ImageListDestroyAPIView(ListCreateAPIView, DestroyAPIView):
 
         return queryset
 
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [IsLandLord(), OnlyOwnerPlacement(), IsAuthenticated()]
-
-        return [IsLandLord(), OnlyOwnerPlacementRelatedModels(), IsAuthenticated()]
-
     def list(self, request, *args, **kwargs):
         queryset = self.get_filtered_queryset(request)
 
@@ -155,7 +154,7 @@ class ImageListDestroyAPIView(ListCreateAPIView, DestroyAPIView):
         if serializer.is_valid(raise_exception=True):
             data = serializer.save()
 
-            return Response({'uploaded_images': data}, status=status.HTTP_201_CREATED)
+            return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, *args, **kwargs):

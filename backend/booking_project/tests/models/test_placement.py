@@ -12,7 +12,7 @@ class PlacementModelTest(PlacementSetupTest):
         self.assertIsNotNone(self.placement.id)
         self.assertIsNotNone(self.placement.owner)
         self.assertIsNotNone(self.placement.category)
-        self.assertEqual(self.placement.owner, self.user)
+        self.assertEqual(self.placement.owner, self.landlord_user)
         self.assertEqual(self.placement.category, self.category)
         self.assertEqual(self.placement.title, "Hotel by User")
         self.assertEqual(self.placement.description, "A" * 50)
@@ -22,13 +22,13 @@ class PlacementModelTest(PlacementSetupTest):
         self.assertEqual(self.placement.total_beds, 3)
         self.assertEqual(self.placement.single_bed, 2)
         self.assertEqual(self.placement.double_bed, 1)
-        self.assertEqual(self.placement.is_active, True)
+        self.assertTrue(self.placement.is_active)
 
     def test_title_uniqueness(self):
         """Test title uniqueness."""
 
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Hotel by User",
             description="A" * 55,
@@ -45,32 +45,11 @@ class PlacementModelTest(PlacementSetupTest):
         error_message = context.exception.message_dict.get("title", [])
         self.assertIn("Placement with this Apartments title already exists.", error_message)
 
-    def test_placement_cannot_be_created_without_owner(self):
-        """Test the placement cannot be created without owner user."""
+    def test_placement_cannot_be_created_without_required_fields(self):
+        """Test the placement cannot be created without owner user or category field."""
 
         new_placement = Placement(
             owner=None,
-            category=self.category,
-            title="Test Hotel by User",
-            description="A" * 50,
-            price=250,
-            number_of_rooms=2,
-            placement_area=43.5,
-            total_beds=3,
-            single_bed=2,
-            double_bed=1,
-        )
-
-        with self.assertRaises(ValidationError) as context:
-            new_placement.full_clean()
-        error_message = context.exception.message_dict.get("owner", [])
-        self.assertIn("This field cannot be null.", error_message)
-
-    def test_placement_cannot_be_created_without_category(self):
-        """Test the placement cannot be created without category."""
-
-        new_placement = Placement(
-            owner=self.user,
             category=None,
             title="Test Hotel by User",
             description="A" * 50,
@@ -84,8 +63,9 @@ class PlacementModelTest(PlacementSetupTest):
 
         with self.assertRaises(ValidationError) as context:
             new_placement.full_clean()
-        error_message = context.exception.message_dict.get("category", [])
-        self.assertIn("This field cannot be null.", error_message)
+        error_message = str(context.exception)
+        self.assertIn("owner", error_message)
+        self.assertIn("category", error_message)
 
     def test_fields_max_length_or_max_value(self):
         """
@@ -94,7 +74,7 @@ class PlacementModelTest(PlacementSetupTest):
         """
 
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="A" * 256,
             description="A" * 2001,
@@ -124,7 +104,7 @@ class PlacementModelTest(PlacementSetupTest):
         number_of_rooms, placement_area, number_of_beds.
         """
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Test Hotel by User",
             description="A" * 39,
@@ -153,7 +133,7 @@ class PlacementModelTest(PlacementSetupTest):
         """
 
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Test Hotel by User",
             description="A" * 50,
@@ -176,7 +156,7 @@ class PlacementModelTest(PlacementSetupTest):
         """
 
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Test Hotel by User",
             description="A" * 50,
@@ -201,7 +181,7 @@ class PlacementModelTest(PlacementSetupTest):
         """
 
         new_placement = Placement(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Another Hotel by User",
             description="A" * 50,

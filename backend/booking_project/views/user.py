@@ -74,7 +74,7 @@ class UserBaseDetailsRetrieveView(RetrieveAPIView):
         - Each user has access only to his own account
     """
 
-    permission_classes = [IsOwnerUser, IsAuthenticated]
+    permission_classes = [IsOwnerUser]
     serializer_class = UserBaseDetailSerializer
 
     def get_object(self):
@@ -157,7 +157,7 @@ class UserRetrieveUpdateDeleteView(RetrieveUpdateDestroyAPIView):
      - Each user has access only to his own account
     """
 
-    permission_classes = [IsOwnerUser, IsAuthenticated]
+    permission_classes = [IsOwnerUser]
     serializer_class = UserDetailSerializer
 
     def get_object(self):

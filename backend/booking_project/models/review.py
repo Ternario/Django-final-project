@@ -1,7 +1,7 @@
 from django.core.validators import MinLengthValidator, MaxValueValidator, MinValueValidator
 from django.db import models
 
-from booking_project.models import BookingDetails
+from booking_project.models import Booking
 from booking_project.models import Placement
 from booking_project.models import User
 
@@ -9,7 +9,7 @@ from booking_project.models import User
 class Review(models.Model):
     objects = models.Manager()
 
-    booking = models.ForeignKey(BookingDetails, on_delete=models.CASCADE, related_name='Booking',
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='Booking',
                                 verbose_name='Previous Booking')
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Author', verbose_name='Author')
     placement = models.ForeignKey(Placement, on_delete=models.CASCADE, related_name='placement_review',

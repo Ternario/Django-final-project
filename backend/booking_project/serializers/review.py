@@ -2,7 +2,7 @@ from datetime import datetime
 
 from rest_framework import serializers
 
-from booking_project.models.booking_details import BookingDetails
+from booking_project.models.booking import Booking
 from booking_project.models.review import Review
 
 
@@ -26,7 +26,7 @@ class RatingSerializer(serializers.ModelSerializer):
         if booking_date:
             raise serializers.ValidationError("You have already left a comment for this reservation.")
 
-        booking = BookingDetails.objects.filter(user=author, placement=placement)
+        booking = Booking.objects.filter(user=author, placement=placement)
 
         if not booking:
             raise serializers.ValidationError("You can't write review for apartments you didn't booked")
