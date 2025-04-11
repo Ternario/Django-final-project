@@ -1,7 +1,6 @@
 from rest_framework.generics import RetrieveUpdateAPIView, get_object_or_404
-from rest_framework.permissions import IsAuthenticated
 
-from booking_project.permissions import OnlyOwnerPlacementRelatedModels, IsLandLord
+from booking_project.permissions import IsOwnerPlacementRelatedModels
 from booking_project.models.placement_location import PlacementLocation
 from booking_project.serializers.placement_location import LocationSerializer
 
@@ -51,11 +50,11 @@ class LocationRetrieveUpdateView(RetrieveUpdateAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacementRelatedModels, IsAuthenticated]
+    permission_classes = [IsOwnerPlacementRelatedModels]
     serializer_class = LocationSerializer
 
     def get_object(self):
-        placement_location = get_object_or_404(PlacementLocation, pk=self.kwargs['placement'])
+        placement_location = get_object_or_404(PlacementLocation, placement=self.kwargs['placement'])
 
         self.check_object_permissions(self.request, placement_location)
 

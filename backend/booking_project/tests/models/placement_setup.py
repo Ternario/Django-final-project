@@ -6,12 +6,12 @@ from booking_project.models import Placement, User, Category
 class PlacementSetupTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create(
-            email="user@example.com",
+        self.landlord_user = User.objects.create(
+            email="landlorduser@example.com",
             first_name="User",
             last_name="User",
-            username="FirstUser",
-            phone="+120456789",
+            username="LandlordUser",
+            phone="+1204506589",
             is_landlord=True
         )
 
@@ -20,7 +20,7 @@ class PlacementSetupTest(TestCase):
         )
 
         self.placement = Placement.objects.create(
-            owner=self.user,
+            owner=self.landlord_user,
             category=self.category,
             title="Hotel by User",
             description="A" * 50,

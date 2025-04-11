@@ -6,9 +6,9 @@ from booking_project.models.placement_location import PlacementLocation
 from booking_project.models.placement import Placement
 from booking_project.models.category import Category
 from booking_project.models.placement_details import PlacementDetails
-from booking_project.models.booking_details import BookingDetails
+from booking_project.models.booking import Booking
 
-admin.site.register(BookingDetails)
+admin.site.register(Booking)
 
 
 class UserAdmin(admin.ModelAdmin):

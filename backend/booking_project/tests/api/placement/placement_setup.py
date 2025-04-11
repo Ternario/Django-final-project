@@ -8,10 +8,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.test import APITestCase, APIClient
-
-from booking_project.models import User, Placement, Category, PlacementDetails, PlacementImage, PlacementLocation
+from booking_project.models import Placement, PlacementDetails, PlacementImage, PlacementLocation
+from booking_project.tests.api.base_setup_data.users_setup_data import BaseUsersSetupData
 
 
 def create_fake_image():
@@ -23,8 +21,7 @@ def create_fake_image():
     return SimpleUploadedFile("fake_image.jpg", image_io.read(), content_type="image/jpeg")
 
 
-class PlacementSetup(APITestCase):
-
+class PlacementSetup(BaseUsersSetupData):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -40,38 +37,7 @@ class PlacementSetup(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.hotel_category = Category.objects.create(name="Hotels")
-        cls.hostel_category = Category.objects.create(name="Hostels")
-
-        cls.landlord_user = User.objects.create(
-            email="landlorduser@example.com",
-            first_name="User",
-            last_name="User",
-            username="FirstLandlordUser",
-            phone="+1234567899",
-            password="userpassword",
-            is_landlord=True
-        )
-
-        cls.landlord_user2 = User.objects.create(
-            email="secondlandlorduser@example.com",
-            first_name="User",
-            last_name="User",
-            username="SecondLandlordUser",
-            phone="+123907899",
-            password="userpassword",
-            is_landlord=True
-        )
-
-        cls.regular_user = User.objects.create(
-            email="user@example.com",
-            first_name="User",
-            last_name="User",
-            username="FirstRegularUser",
-            phone="+1234568999",
-            password="userpassword",
-            is_landlord=False
-        )
+        super().setUpTestData()
 
         cls.temp_images_set1 = [create_fake_image() for _ in range(15)]
         cls.temp_images_set2 = [create_fake_image() for _ in range(16)]
@@ -97,6 +63,8 @@ class PlacementSetup(APITestCase):
                                                                                kwargs={"pk": pk})
 
     def setUp(self):
+        super().setUp()
+
         self.placement = Placement.objects.create(
             owner=self.landlord_user,
             category=self.hotel_category,
@@ -184,9 +152,3 @@ class PlacementSetup(APITestCase):
         self.inactive_placement_images = PlacementImage.objects.bulk_create([
             PlacementImage(placement=self.inactive_placement, image=create_fake_image()) for _ in range(8)
         ])
-
-        self.client = APIClient()
-
-        refresh = RefreshToken.for_user(self.landlord_user)
-        self.client.cookies["access_token"] = str(refresh.access_token)
-        self.client.cookies["refresh_token"] = str(refresh)

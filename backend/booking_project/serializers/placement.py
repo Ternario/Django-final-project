@@ -46,7 +46,7 @@ class PlacementCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Both bed fields must be equal to the total beds.')
 
         if post_code and not re.match('^[0-9]{5}$', post_code):
-            raise serializers.ValidationError('Invalid postal code.')
+            raise serializers.ValidationError({'post_code': 'Invalid postal code.'})
 
         return attrs
 
@@ -94,7 +94,6 @@ class PlacementBaseDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Placement
         exclude = ['is_active', 'owner', 'is_deleted', 'updated_at', 'category']
-
 
     def get_city(self, obj):
         city = PlacementLocation.objects.get(placement=obj.pk)
@@ -156,7 +155,7 @@ class PlacementSerializer(serializers.ModelSerializer):
         try:
             category = Category.objects.get(pk=value)
         except Category.DoesNotExist:
-            raise serializers.ValidationError("A category with this ID does not exist.")
+            raise serializers.ValidationError({'category': 'A category with this ID does not exist.'})
 
         return category
 

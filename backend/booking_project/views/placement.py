@@ -3,12 +3,12 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import (
     CreateAPIView, RetrieveUpdateDestroyAPIView, ListAPIView, UpdateAPIView, get_object_or_404
 )
-from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
+from rest_framework.permissions import AllowAny, SAFE_METHODS
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from booking_project.models import Placement
-from booking_project.permissions import IsLandLord, OnlyOwnerPlacement
+from booking_project.permissions import IsLandLord, IsOwnerPlacement
 from booking_project.serializers.placement import (
     PlacementCreateSerializer, PlacementBaseDetailsSerializer, PlacementAllDetailsSerializer,
     PlacementSerializer, PlacementActivationSerializer
@@ -63,7 +63,7 @@ class PlacementCreateView(CreateAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, IsAuthenticated]
+    permission_classes = [IsLandLord]
     serializer_class = PlacementCreateSerializer
 
     def create(self, request, *args, **kwargs):
@@ -158,7 +158,7 @@ class MyPlacementsListView(ListAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacement, IsAuthenticated]
+    permission_classes = [IsOwnerPlacement]
     serializer_class = PlacementBaseDetailsSerializer
 
     def get_queryset(self):
@@ -270,7 +270,7 @@ class PlacementRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
             return [AllowAny()]
-        return [IsLandLord(), OnlyOwnerPlacement()]
+        return [IsOwnerPlacement()]
 
     def get_serializer_class(self):
         if self.request.method == "PUT":
@@ -314,7 +314,7 @@ class PlacementActivationView(UpdateAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacement, IsAuthenticated]
+    permission_classes = [IsOwnerPlacement]
     serializer_class = PlacementActivationSerializer
 
     def get_object(self):
@@ -371,7 +371,7 @@ class InactivePlacementListView(ListAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacement, IsAuthenticated]
+    permission_classes = [IsOwnerPlacement]
     serializer_class = PlacementBaseDetailsSerializer
 
     def get_queryset(self):
@@ -479,7 +479,7 @@ class InactivePlacementRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
          - IsAuthenticated: can only be used by an authorized user.
     """
 
-    permission_classes = [IsLandLord, OnlyOwnerPlacement, IsAuthenticated]
+    permission_classes = [IsOwnerPlacement]
 
     def get_serializer_class(self):
         if self.request.method == "PUT":

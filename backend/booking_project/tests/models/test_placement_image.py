@@ -2,6 +2,7 @@ import os
 import shutil
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from booking_project.models import PlacementImage
@@ -50,3 +51,17 @@ class PlacementImageModelTest(PlacementSetupTest):
         self.assertIsNotNone(self.placement_image.id)
         self.assertIsNotNone(self.placement_image.placement)
         self.assertTrue(image_path.endswith(expected_path))
+
+    def test_image_cannot_be_created_without_placement(self):
+        """Test the image cannot be created without placement or image field."""
+
+        new_image = PlacementImage(
+            placement=None,
+            image=None
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            new_image.full_clean()
+        error_message = str(context.exception)
+        self.assertIn("placement", error_message)
+        self.assertIn("image", error_message)
