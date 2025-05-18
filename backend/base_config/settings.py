@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-AUTH_USER_MODEL = 'booking_project.User'
+AUTH_USER_MODEL = 'booking.User'
 
 # Application definition
 
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # local
-    'booking_project.apps.BookingProject'
+    'booking.apps.BookingConfig'
 ]
 
 MIDDLEWARE = [
@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'booking_project.middleware.JWTAuthenticationMiddleware',
+    'booking.middleware.JWTAuthenticationMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
