@@ -21,6 +21,9 @@ yarn-error.log*
 json_create_object.txt
 *.env
 
+backend/table.json
+backend/test_data.txt
+
 *.log
 *.pot
 *.pyc
