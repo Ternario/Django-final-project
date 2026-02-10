@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
-AUTH_USER_MODEL = 'booking.User'
+AUTH_USER_MODEL = 'properties.User'
 
 # Application definition
 
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django_filters',
 
     # local
-    'booking.apps.BookingConfig'
+    'properties.apps.PropertiesConfig'
 ]
 
 MIDDLEWARE = [
@@ -60,7 +60,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'booking.middleware.JWTAuthenticationMiddleware',
+    'properties.middleware.jwt_authentication.JWTAuthenticationMiddleware',
+    # 'properties.middleware.user_preferences.UserPreferencesMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -102,7 +103,7 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': f'{BASE_DIR}/db.sqlite3',
         },
     }
 
@@ -145,16 +146,17 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    "DATE_INPUT_FORMATS": [
+    'DATE_INPUT_FORMATS': [
         '%d-%m-%Y',
     ],
-    "DATE_FORMAT": '%d-%m-%Y',
+    'DATE_FORMAT': '%d-%m-%Y',
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'properties.pagination.Pagination',
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
@@ -168,6 +170,39 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_COOKIE_SAMESITE': 'None',
 }
+
+HASH_SALT = env.str('HASH_SALT')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+BASE_CURRENCY = env.str('BASE_CURRENCY')
+
+# SMTP-server Settings
+EMAIL_HOST = env.str('EMAIL_HOST')
+EMAIL_PORT = env.str('EMAIL_PORT')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
+EMAIL_HOST_USER = env.str('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
+
+# Default sender email
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+
+# Default emails for support, errors,admins
+SUPPORT_EMAILS = {
+    'admin': env('SUPPORT_EMAIL_ADMIN'),
+    'moderators': env('SUPPORT_EMAIL_MODERATORS'),
+    'support': env('SUPPORT_EMAIL_SUPPORT'),
+}
+# Token for generating a new token for the user for data depersonalization.
+USER_TOKEN_SECRET = env.str('USER_TOKEN_SECRET')
+
+# API key for access to geoapify.
+GEOAPIFY_API_KEY = env.str('GEOAPIFY_API_KEY')
+
+# API key for access to Exchange Rate API
+EXCHANGERATE_API_KEY = env.str('EXCHANGERATE_API_KEY')
+
+SITE_URL = env('SITE_URL')
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = True
