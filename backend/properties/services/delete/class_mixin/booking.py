@@ -46,10 +46,7 @@ class BookingCheckMixin:
         Raises:
             RuntimeError: If the user is expected to have a company profile but none exists.
         """
-        if not self.target_model.landlord_type:
-            return None
-
-        landlord_profile: List[LandlordProfile] = self.target_model.landlord_profiles.all()
+        landlord_profile: LandlordProfile = LandlordProfile.objects.filter(created_by=self.target_model.pk)
 
         if not landlord_profile:
             raise RuntimeError(

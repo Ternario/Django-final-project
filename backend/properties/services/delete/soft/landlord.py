@@ -63,8 +63,9 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
         if target_model.is_deleted:
             raise ValidationError({'detail': _('Landlord profile is already deleted.')})
 
-        email_handler: Type[SoftAdminResponse | SoftUserResponse] = cls._prevalidate(target_model.created_by,
-                                                                                     deleted_by, reason)
+        email_handler: Type[SoftAdminResponse | SoftUserResponse] = cls._prevalidate(
+            target_model.created_by, deleted_by, reason
+        )
         return cls(target_model, deleted_by, reason, email_handler)
 
     def _check_active_bookings(self) -> List[Booking]:

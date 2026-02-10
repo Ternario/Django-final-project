@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Type
 
 if TYPE_CHECKING:
-    from properties.models import Property, LandlordProfile
+    from properties.models import Property, LandlordProfile, CompanyMembership
 
 import logging
 
@@ -51,11 +51,11 @@ class PropertyDelete(BaseCascadeDelete):
         """
         admins: List[int] = [company.created_by.pk]
 
-        admins.extend(list(
-            company.company_membership.filter(
-                role=CompanyRole.ADMIN.value[0]
-            ).values_list('user', flat=True)
-        ))
+        admins.extend(
+            list(CompanyMembership.objects.filter(
+                company_id=company.pk, role=CompanyRole.ADMIN.value[0]
+            ).values_list('user_id', flat=True))
+        )
 
         return admins
 

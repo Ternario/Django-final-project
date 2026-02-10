@@ -43,7 +43,7 @@ class SoftLogModel(BaseLogModel):
         properties: List[Property] = Property.objects.not_deleted(owner=model)
 
         if model.type == LandlordType.COMPANY.value[0]:
-            membership: List[CompanyMembership] = model.company_membership.all()
+            membership: List[CompanyMembership] = CompanyMembership.objects.filter(comapny_id=model.pk)
 
             if membership:
                 for member in membership:

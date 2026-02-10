@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Union, Type
 
+from properties.utils.choices.landlord_profile import LandlordType
+
 if TYPE_CHECKING:
     from properties.models import User, LandlordProfile
 
@@ -44,6 +46,9 @@ class BaseCascadeDelete(ABC):
             email notifications depending on the deletion context.
     """
     SOFT_DELETE: str = DeletionType.SOFT_DELETE.value[0]
+    _INDIVIDUAL: str = LandlordType.INDIVIDUAL.value[0]
+    _COMPANY: str = LandlordType.COMPANY.value[0]
+    _COMPANY_MEMBER: str = LandlordType.COMPANY_MEMBER.value[0]
 
     def __init__(self, target_model: DeletableModel, deleted_by: User, reason: str,
                  email_handler: Type[SoftAdminResponse | SoftUserResponse]) -> None:
