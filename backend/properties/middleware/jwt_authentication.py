@@ -2,9 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, Token
+    from rest_framework_simplejwt.tokens import Token
     from django.http import HttpRequest, HttpResponse
 
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, Token
 from datetime import datetime
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken

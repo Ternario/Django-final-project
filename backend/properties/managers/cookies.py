@@ -57,14 +57,14 @@ def set_jwt_cookies(response: HttpResponse, user: User) -> HttpResponse:
         refresh_token_str,
         expires=refresh_token_exp,
         httponly=True,
-        samesite='None'
+        samesite='lax'
     )
     response.set_cookie(
         'access_token',
         access_token_str,
         expires=access_token_exp,
         httponly=True,
-        samesite='None'
+        samesite='lax'
     )
 
     return response

@@ -112,6 +112,7 @@ class UserLoginView(APIView):
 
         return response
 
+
 @extend_schema(
     request=None,
     responses={204: None},

@@ -6,9 +6,9 @@ from properties.models import Property, Booking, Language, CompanyMembership, Am
 
 
 class PropertyFilter(FilterSet):
-    city = CharFilter(method='filter_city')
-    price_gte = NumberFilter(field_name='price')
-    price_lte = NumberFilter(field_name='price')
+    city = CharFilter(field_name='location__city', method='filter_city', label='City')
+    price_gte = NumberFilter(method='filter_price_gte')
+    price_lte = NumberFilter(method='filter_price_lte')
     rating_gte = NumberFilter(field_name='rating', lookup_expr='gte')
     property_type = CharFilter(field_name='property_type', lookup_expr='iexact')
 
@@ -36,7 +36,7 @@ class PropertyFilter(FilterSet):
 
     class Meta:
         model = Property
-        fields = ['city', 'price_gte', 'price_lte', 'rating_gte', 'property_type']
+        fields = ['city']
 
 
 class BookingFilter(FilterSet):
