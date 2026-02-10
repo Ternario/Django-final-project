@@ -1,0 +1,5 @@
+{{ message }}
+
+{% for link in links %}
+{{ link }}
+{% endfor %}
