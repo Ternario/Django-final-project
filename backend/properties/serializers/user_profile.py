@@ -11,11 +11,10 @@ from properties.utils.regex_patterns import match_phone_number
 
 class UserProfileSerializer(ModelSerializer):
     theme_display = CharField(source='get_theme_display', read_only=True)
-    favorites = PropertyBaseSerializer(many=True, read_only=True)
 
     class Meta:
         model = UserProfile
-        exclude = ['user_token', 'favorites', 'created_at', 'updated_at']
+        exclude = ['user_token', 'created_at', 'updated_at']
         read_only_fields = ['user']
 
     def validate_phone(self, phone: str | None) -> str:

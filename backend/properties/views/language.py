@@ -15,6 +15,7 @@ class LanguageLAV(ListAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
 
@@ -27,6 +28,7 @@ class LanguageRAV(RetrieveAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
 

@@ -4,7 +4,7 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, List, Dict
 
 if TYPE_CHECKING:
-    from properties.models import Property, Currency, DiscountProperty
+    from properties.models import Property, Currency
 
 import logging
 from decimal import Decimal
@@ -12,7 +12,7 @@ from decimal import Decimal
 from django.db.models import Q, QuerySet, Prefetch
 from django.utils import timezone
 
-from properties.models import Discount
+from properties.models import Discount, DiscountProperty
 from properties.services.discount.calculator.base import BaseCalculator
 from properties.utils.choices.discount import DiscountType, DiscountStatus
 from properties.utils.error_messages.discounts import DISCOUNT_ERRORS

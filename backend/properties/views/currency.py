@@ -15,6 +15,7 @@ class CurrencyLAV(ListAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Currency.objects.all()
     serializer_class = CurrencyBaseSerializer
 
@@ -27,6 +28,7 @@ class CurrencyRAV(RetrieveAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Currency.objects.all()
     serializer_class = CurrencySerializer
 

@@ -25,7 +25,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from properties.models import (
-    Discount, LandlordProfile, UserProfile, Currency, DiscountProperty, DiscountUser
+    Discount, LandlordProfile, Currency, DiscountProperty, DiscountUser
 )
 from properties.utils.check_permissions.discount import (
     CheckDiscountPermission, CheckDiscountPropertyPermission, CheckDiscountUserPermission
@@ -75,6 +75,7 @@ class DiscountPublicLAV(ListAPIView):
     Accessible to any user (no authentication required, `AllowAny`).
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = DiscountBaseSerializer
 
     def get_queryset(self) -> QuerySet[Discount]:
@@ -104,6 +105,9 @@ class DiscountLAV(ListAPIView):
     ordering = ['-valid_from']
 
     def get_queryset(self) -> QuerySet[Discount]:
+        if getattr(self, 'swagger_fake_view', False):
+            return Discount.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 
@@ -128,6 +132,7 @@ class DiscountPublicRAV(RetrieveAPIView):
     Accessible to any user (`AllowAny`).
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Discount.objects.all()
     serializer_class = DiscountPublicSerializer
 
@@ -139,11 +144,8 @@ class DiscountPublicRAV(RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs) -> Response:
         if self.request.user:
             user: User = self.request.user
-            profile: UserProfile = UserProfile.objects.get(user_id=user.pk).select_related(
-                'currency'
-            )
 
-            currency: Currency = profile.currency
+            currency: Currency = user.currency
         else:
             currency: Currency = Currency.objects.get(code=BASE_CURRENCY)
 
@@ -169,6 +171,9 @@ class DiscountRUDAV(RetrieveUpdateDestroyAPIView):
     serializer_class = DiscountSerializer
 
     def get_object(self) -> Discount:
+        if getattr(self, 'swagger_fake_view', False):
+            return Discount.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
         discount_id: int = self.kwargs['id']
@@ -177,6 +182,7 @@ class DiscountRUDAV(RetrieveUpdateDestroyAPIView):
 
         if self.request.method in SAFE_METHODS:
             CheckDiscountPermission(user, hash_id).base_access()
+
             queryset = queryset.select_related('currency').prefetch_related('incompatible_with')
             return get_object_or_404(queryset, id=discount_id, landlord_profile__hash_id=hash_id)
 
@@ -245,6 +251,9 @@ class DiscountPropertyLAV(ListAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[DiscountProperty]:
+        if getattr(self, 'swagger_fake_view', False):
+            return DiscountProperty.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 
@@ -342,11 +351,14 @@ class DiscountUserLAV(ListAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = DiscountUserBaseSerializer
-    filterset_fields = ['status', 'is_used', 'is_active']
+    filterset_fields = ['status']
     ordering_fields = ['expires_at']
     ordering = ['-expires_at']
 
     def get_queryset(self) -> QuerySet[DiscountUser]:
+        if getattr(self, 'swagger_fake_view', False):
+            return DiscountUser.objects.none()
+
         user: User = self.request.user
         return DiscountUser.objects.filter(user_id=user.pk).select_relate('discount')
 
@@ -387,11 +399,14 @@ class DiscountUserPropertyOwnerLAV(ListAPIView):
     """
     permission_classes = [IsLandlord]
     serializer_class = DiscountUserBaseSerializer
-    filterset_fields = ['status', 'is_used', 'is_active']
+    filterset_fields = ['status']
     ordering_fields = ['expires_at']
     ordering = ['-expires_at']
 
     def get_queryset(self) -> QuerySet[DiscountUser]:
+        if getattr(self, 'swagger_fake_view', False):
+            return DiscountUser.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 

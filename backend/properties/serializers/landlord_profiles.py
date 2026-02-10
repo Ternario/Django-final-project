@@ -27,7 +27,7 @@ from properties.utils.regex_patterns import match_phone_number
 class LandlordProfileCreateSerializer(ModelSerializer):
     class Meta:
         model = LandlordProfile
-        exclude = ['created_by_token', 'is_trusted', 'is_deleted', 'deleted_at', 'updated_at']
+        exclude = ['created_by_token', 'is_trusted', 'is_verified', 'is_deleted', 'deleted_at', 'updated_at']
         read_only_fields = ['created_by', 'hash_id']
 
     @atomic_handel
@@ -213,7 +213,7 @@ class CompanyMembershipSerializer(ModelSerializer):
 
     class Meta:
         model = CompanyMembership
-        exclude = ['user_token', 'user_full_name', 'is_deleted', 'deleted_at' 'created_at', 'updated_at']
+        exclude = ['user_token', 'user_full_name', 'is_deleted', 'deleted_at', 'created_at', 'updated_at']
         read_only_fields = ['company', 'joined_at']
 
     @atomic_handel

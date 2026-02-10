@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import List, TYPE_CHECKING
 
+from drf_spectacular.utils import extend_schema
+
 from properties.utils.check_permissions.related_to_property_models import CheckRelatedPropertyModelsPermission
 
 if TYPE_CHECKING:
@@ -82,6 +84,11 @@ class PropertyImageDestroyAV(APIView):
     """
     permission_classes = [IsLandlord]
 
+    @extend_schema(
+        request=PropertyImageDestroySerializer,
+        responses={204: None},
+        description='Delete image/list of images.'
+    )
     @atomic_handel
     def delete(self, request, *args, **kwargs) -> Response:
         user: User = self.request.user

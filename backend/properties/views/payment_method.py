@@ -15,6 +15,7 @@ class PaymentMethodLAV(ListAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = PaymentMethod.objects.all()
     serializer_class = PaymentMethodSerializer
 
@@ -27,6 +28,7 @@ class PaymentMethodRAV(RetrieveAPIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = PaymentMethod.objects.all()
     serializer_class = PaymentMethodSerializer
 
