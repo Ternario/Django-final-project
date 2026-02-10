@@ -1,12 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict
 
+from drf_spectacular.utils import extend_schema
+
 from properties.utils.choices.property import PropertyType
 from properties.utils.error_messages.permission import PERMISSION_ERRORS
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet
-    from properties.models import User
+    from django.db.models import QuerySet, Model
+    from properties.models import User, Review
 
 from rest_framework.generics import (
     CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404, RetrieveAPIView
@@ -32,6 +34,11 @@ from properties.utils.check_permissions.landlord_profile import (
 from properties.utils.choices.landlord_profile import CompanyRole, LandlordType
 
 
+@extend_schema(
+    request=LandlordProfileCreateSerializer,
+    responses={200: None},
+    description='Return landlord type choices / create landlord profile'
+)
 class LandlordProfileAV(APIView):
     """
     API view for retrieving choices and creating a new landlord profile.
@@ -76,6 +83,9 @@ class LandlordProfileLAV(ListAPIView):
     serializer_class = LandlordProfileBaseSerializer
 
     def get_queryset(self) -> QuerySet[LandlordProfile]:
+        if getattr(self, 'swagger_fake_view', False):
+            return LandlordProfile.objects.none()
+
         user: User = self.request.user
 
         if user.landlord_type in [LandlordType.INDIVIDUAL.value[0], LandlordType.COMPANY.value[0]]:
@@ -97,6 +107,7 @@ class LandlordProfilePublicRAV(RetrieveAPIView):
     and payment methods.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = LandlordProfile.objects.not_deleted()
     serializer_class = LandlordProfilePublicSerializer
 
@@ -199,6 +210,9 @@ class CompanyMembershipLAV(ListAPIView):
         self.has_full_access = False
 
     def get_queryset(self) -> QuerySet[CompanyMembership]:
+        if getattr(self, 'swagger_fake_view', False):
+            return CompanyMembership.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 

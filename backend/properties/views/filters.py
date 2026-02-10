@@ -1,5 +1,7 @@
 from typing import List, Dict, TYPE_CHECKING
 
+from drf_spectacular.utils import extend_schema
+
 from properties.utils.choices.booking import CancellationPolicy
 
 if TYPE_CHECKING:
@@ -50,7 +52,13 @@ class PropertyFiltersAV(APIView):
         - AllowAny: accessible by any user, authorized or not.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
 
+    @extend_schema(
+        request=None,
+        responses={200: None},
+        description='Return dict of filters'
+    )
     def get(self, request, *args, **kwargs) -> Response:
         queryset: QuerySet[AmenityCategory] = AmenityCategory.objects.all().order_by('name').prefetch_related(
             'amenities')

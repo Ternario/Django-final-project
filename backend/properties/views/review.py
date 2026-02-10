@@ -72,6 +72,7 @@ class ReviewPublicLAV(ListAPIView):
     This view provides publicly visible reviews for a property.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = ReviewListSerializer
 
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -80,6 +81,9 @@ class ReviewPublicLAV(ListAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Review]:
+        if getattr(self, 'swagger_fake_view', False):
+            return Review.objects.none()
+
         p_id: int = self.kwargs['p_id']
         return Review.objects.published(property_ref_id=p_id).select_related('owner_response_by', 'moderator_notes_by')
 

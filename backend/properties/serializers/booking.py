@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import decimal
+
 from typing import Any, TYPE_CHECKING, Dict, List
 
 if TYPE_CHECKING:
@@ -127,48 +127,46 @@ class BookingCreateSerializer(ModelSerializer):
 
 class BookingBaseSerializer(ModelSerializer):
     property_name = CharField(source='property_ref.title', read_only=True)
-    check_in_time_display = CharField(source='get_check_in_time_display', read_only=True)
-    check_out_time_display = CharField(source='get_check_out_time_display', read_only=True)
-    status_display = CharField(source='get_status_display', read_only=True)
-    payment_status_display = CharField(source='get_payment_status_display', read_only=True)
+    check_in_time = CharField(source='get_check_in_time_display', read_only=True)
+    check_out_time = CharField(source='get_check_out_time_display', read_only=True)
+    status = CharField(source='get_status_display', read_only=True)
+    payment_status = CharField(source='get_payment_status_display', read_only=True)
     currency = CurrencyBaseSerializer(read_only=True)
-    cancelled_at_display = DateTimeField(source='cancelled_at', format='%d-%m-%Y %H:%M', read_only=True)
-    created_at_display = DateTimeField(source='created_at', format='%d-%m-%Y %H:%M', read_only=True)
-    total_price_display = SerializerMethodField()
+    cancelled_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
+    created_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
+    total_price = SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = ['id', 'booking_number', 'property_ref', 'property_name', 'check_in_date', 'check_in_time',
-                  'check_out_date', 'check_out_time', 'status', 'status_display', 'total_price_display',
-                  'currency', 'payment_status', 'payment_status_display', 'cancelled_at', 'created_at_display',
-                  'created_at']
+                  'check_out_date', 'check_out_time', 'status', 'total_price', 'currency', 'payment_status',
+                  'cancelled_at', 'created_at']
 
-    def get_total_price_display(self, obj: Booking) -> decimal:
+    def get_total_price(self, obj: Booking) -> Decimal:
         return format_price(obj.total_price, obj.currency_rate_to_base)
 
 
 class BookingGuestSerializer(ModelSerializer):
     property_name = CharField(source='property_ref.title', read_only=True)
-    check_in_time_display = CharField(source='get_check_in_time_display', read_only=True)
-    check_out_time_display = CharField(source='get_check_out_time_display', read_only=True)
-    status_display = CharField(source='get_status_display', read_only=True)
+    check_in_time = CharField(source='get_check_in_time_display', read_only=True)
+    check_out_time = CharField(source='get_check_out_time_display', read_only=True)
+    status = CharField(source='get_status_display', read_only=True)
     currency = CurrencyBaseSerializer(read_only=True)
-    payment_type_display = CharField(source='payment_type.name')
-    payment_method_display = CharField(source='payment_method.name')
-    payment_status_display = CharField(source='get_payment_status_display', read_only=True)
-    cancelled_at_display = DateTimeField(source='cancelled_at', format='%d-%m-%Y %H:%M', read_only=True)
-    created_at_display = DateTimeField(source='created_at', format='%d-%m-%Y %H:%M', read_only=True)
+    payment_type = CharField(source='payment_type.name')
+    payment_method = CharField(source='payment_method.name')
+    payment_status = CharField(source='get_payment_status_display', read_only=True)
+    cancelled_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
+    created_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
     total_price = SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = ['id', 'booking_number', 'property_ref', 'property_name', 'guests_number', 'additional_requests',
-                  'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time', 'status', 'status_display',
-                  'currency', 'total_price_display', 'payment_type_display', 'payment_method_display',
-                  'payment_status_display', 'is_active', 'cancellation_reason', 'cancelled_at', 'created_at_display',
-                  'created_at']
+                  'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time', 'status', 'currency',
+                  'total_price', 'payment_type', 'payment_method', 'payment_status', 'is_active', 'cancellation_reason',
+                  'cancelled_at', 'created_at']
 
-    def get_total_price(self, obj: Booking) -> decimal:
+    def get_total_price(self, obj: Booking) -> Decimal:
         return format_price(obj.total_price, obj.currency_rate_to_base)
 
 
@@ -182,23 +180,23 @@ class BookingOwnerSerializer(BookingGuestSerializer):
         model = BookingGuestSerializer.Meta.model
         fields = BookingGuestSerializer.Meta.fields + ['guest', 'base_price', 'taxes_fees', 'discounts']
 
-    def get_base_price(self, obj: Booking) -> decimal:
+    def get_base_price(self, obj: Booking) -> Decimal:
         return format_price(obj.base_price, obj.currency_rate_to_base)
 
-    def get_taxes_fees(self, obj: Booking) -> decimal:
+    def get_taxes_fees(self, obj: Booking) -> Decimal:
         return format_price(obj.taxes_fees, obj.currency_rate_to_base)
 
 
 class BookingCancellationSerializer(ModelSerializer):
-    check_in_time_display = CharField(source='get_check_in_time_display', read_only=True)
-    check_out_time_display = CharField(source='get_check_out_time_display', read_only=True)
-    status_display = CharField(source='get_status_display', read_only=True)
-    cancelled_at_display = DateTimeField(source='cancelled_at', format='%d-%m-%Y %H:%M', read_only=True)
+    check_in_time = CharField(source='get_check_in_time_display', read_only=True)
+    check_out_time = CharField(source='get_check_out_time_display', read_only=True)
+    status = CharField(source='get_status_display', read_only=True)
+    cancelled_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
 
     class Meta:
         model = Booking
-        fields = ['id', 'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time', 'status',
-                  'status_display', 'cancelled_at', 'cancellation_reason', 'cancelled_at_display']
+        fields = ['id', 'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time', 'status', 'cancelled_at',
+                  'cancellation_reason']
 
     def update(self, instance: Booking, validated_data: Dict[str, Any]) -> Booking:
         cancelled_by: User = validated_data.get('cancelled_by')

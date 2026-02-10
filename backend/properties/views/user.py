@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from drf_spectacular.utils import extend_schema
+
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
@@ -110,7 +112,11 @@ class UserLoginView(APIView):
 
         return response
 
-
+@extend_schema(
+    request=None,
+    responses={204: None},
+    description="Logout user and invalidate tokens"
+)
 class LogoutUserView(APIView):
     """
     API view for logging out the authenticated user.

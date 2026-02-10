@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type, Dict
 
+from drf_spectacular.utils import extend_schema
+
 if TYPE_CHECKING:
     from properties.models import User, Property
     from rest_framework.serializers import Serializer
@@ -28,6 +30,11 @@ from properties.utils.check_permissions.booking import CheckBookingPermission, C
 from properties.utils.choices.time import CheckInTime, CheckOutTime
 
 
+@extend_schema(
+    request=None,
+    responses={200: None},
+    description='Return check in/out time choices.'
+)
 class BookingTimeChoicesAV(APIView):
     """
     View to get list of check in and check out time.
@@ -149,6 +156,9 @@ class BookingPropertyOwnerLAV(ListAPIView):
     filterset_class = BookingFilter
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Booking.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 

@@ -67,6 +67,7 @@ class PropertyPublicLAV(ListAPIView):
     Accessible by any user, including unauthenticated users.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = PropertyBaseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
@@ -76,7 +77,7 @@ class PropertyPublicLAV(ListAPIView):
     def get_queryset(self) -> QuerySet[Property]:
         return Property.objects.active().select_related(
             'owner', 'detail', 'location'
-        ).select_related(
+        ).prefetch_related(
             'property_images'
         )
 
@@ -106,14 +107,18 @@ class PropertyOwnerPublicLAV(ListAPIView):
     Accessible by any user, including unauthenticated users.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = PropertyBaseSerializer
 
     def get_queryset(self) -> QuerySet[Property]:
+        if getattr(self, 'swagger_fake_view', False):
+            return Property.objects.none()
+
         hash_id: str = self.kwargs['hash_id']
 
         return Property.objects.active(owner__hash_id=hash_id).select_related(
             'owner', 'detail', 'location'
-        ).select_related(
+        ).prefetch_related(
             'property_images'
         )
 
@@ -147,6 +152,9 @@ class PropertyOwnerLAV(ListAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Property]:
+        if getattr(self, 'swagger_fake_view', False):
+            return Property.objects.none()
+
         user: User = self.request.user
         hash_id: str = self.kwargs['hash_id']
 
@@ -154,7 +162,7 @@ class PropertyOwnerLAV(ListAPIView):
 
         return Property.objects.filter(owner__hash_id=hash_id).select_related(
             'owner', 'detail', 'location'
-        ).select_related(
+        ).prefetch_related(
             'property_images'
         )
 
@@ -182,6 +190,7 @@ class PropertyPublicRAV(RetrieveAPIView):
     Accessible to any user.
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     queryset = Property.objects.active()
     serializer_class = PropertySerializer
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import decimal
 from typing import Any, TYPE_CHECKING, Dict, List
 
 from properties.utils.currency import format_price
@@ -215,7 +214,7 @@ class DiscountSerializer(ModelSerializer):
 
         return attrs
 
-    def get_value(self, obj: Discount) -> decimal:
+    def get_value(self, obj: Discount) -> Decimal:
         return format_price(obj.value, obj.currency.rate_to_base)
 
 
@@ -312,7 +311,7 @@ class DiscountUserCreateSerializer(ModelSerializer):
 
     class Meta:
         model = DiscountUser
-        fields = ['id', 'discount', 'landlord_profile', 'assigned_by', 'code', 'invite_url', 'booking']
+        fields = ['id', 'discount', 'landlord_profile', 'assigned_by', 'code', 'invite_url', 'booking', 'create_token']
         read_only_fields = ['landlord_profile', 'assigned_by']
 
     @atomic_handel
@@ -354,7 +353,7 @@ class DiscountUserBaseSerializer(ModelSerializer):
 
     class Meta:
         model = DiscountUser
-        fields = ['id', 'discount_name', 'status', 'is_used', 'used_at', 'expires_at']
+        fields = ['id', 'discount_name', 'status', 'used_at', 'expires_at']
 
 
 class DiscountUserSerializer(ModelSerializer):
