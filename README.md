@@ -34,7 +34,8 @@
 
 **_Environment Setup_**
 
-Before running the project, create a `.env` file in the root directory of your backend and fill in the following variables:
+Before running the project, create a `.env` file in the root directory of your backend and fill in the following
+variables:
 
 ```bash
 # General
@@ -100,8 +101,9 @@ python manage.py migrate
 This command will load the **base data** into the database, including:
 
 - Amenities
-- Base Locations
-- Base Currencies
+- Locations
+- Currencies
+- etc.
 
 In the future, additional fixtures will also be added using the same command.
 
@@ -122,7 +124,8 @@ python manage.py set_base_data
 
 **_Start the development server_**
 
-After you have configured your `.env` file and loaded the base data (`python manage.py set_base_data`), start the Django development server with:
+After you have configured your `.env` file and loaded the base data (`python manage.py set_base_data`), start the Django
+development server with:
 
 ```bash
 python manage.py runserver
@@ -151,7 +154,8 @@ You can access it at:
 
 - **Notes:**
     - API keys are stored securely in the `.env` file (`EXCHANGERATE_API_KEY`, `GEOAPIFY_API_KEY`).
-    - Future external services (like payment gateways or asynchronous tasks via Celery) will also be documented in this section.
+    - Future external services (like payment gateways or asynchronous tasks via Celery) will also be documented in this
+      section.
 
 **_🔧 Internal Services_**
 
@@ -178,7 +182,8 @@ You can access it at:
 **_Upcoming improvements and planned functionalities_**
 
 - **Asynchronous & Scheduled Tasks**
-    - Implement background jobs and scheduled operations using Celery (e.g., recurring discount updates, email notifications).
+    - Implement background jobs and scheduled operations using Celery (e.g., recurring discount updates, email
+      notifications).
 
 - **Review & Rating Services**
     - Backend services for handling user reviews, ratings, and feedback for properties.
@@ -191,4 +196,5 @@ You can access it at:
 
 - **Full Dockerized Stack**
     - Containerize the backend (and later the frontend) with Docker and Docker Compose.
-    - Ensures consistent development environments, easy deployment, and isolated dependencies (Python, MySQL, Celery, etc.).
+    - Ensures consistent development environments, easy deployment, and isolated dependencies (Python, MySQL, Celery,
+      etc.).
