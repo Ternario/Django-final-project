@@ -3,12 +3,11 @@ from typing import TYPE_CHECKING, List, Dict
 
 from drf_spectacular.utils import extend_schema
 
-from properties.utils.choices.property import PropertyType
 from properties.utils.error_messages.permission import PERMISSION_ERRORS
 
 if TYPE_CHECKING:
-    from django.db.models import QuerySet, Model
-    from properties.models import User, Review
+    from django.db.models import QuerySet
+    from properties.models import User
 
 from rest_framework.generics import (
     CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404, RetrieveAPIView
@@ -56,7 +55,7 @@ class LandlordProfileAV(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs) -> Response:
-        landlord_type: List[Dict[str, str]] = [{'key': key, 'label': label} for key, label in PropertyType.choices()]
+        landlord_type: List[Dict[str, str]] = [{'key': key, 'label': label} for key, label in LandlordType.choices()]
 
         return Response({'landlord_type': landlord_type}, status=status.HTTP_200_OK)
 

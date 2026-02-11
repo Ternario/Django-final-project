@@ -1,0 +1,470 @@
+[
+  {
+    "model": "properties.user",
+    "pk": 1,
+    "fields": {
+      "email": "admin@example.com",
+      "password": "pbkdf2_sha256$870000$6NkXJwOkRtYFrp2AFt2lBC$MAZZNF1f3YL3rAMTJFd0zsb0+KE3lawFyXWdeUT0ths=",
+      "first_name": "Site",
+      "last_name": "Admin",
+      "language": 1,
+      "currency": 1,
+      "is_staff": true,
+      "is_superuser": true,
+      "is_admin": true,
+      "is_moderator": false,
+      "is_landlord": false,
+      "landlord_type": "NONE",
+      "is_verified": true,
+      "is_deleted": false,
+      "is_active": true,
+      "date_joined": "2024-01-10T09:15:00Z",
+      "created_at": "2024-01-10T09:15:00Z",
+      "updated_at": "2024-01-10T09:15:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 2,
+    "fields": {
+      "email": "individual1@example.com",
+      "password": "pbkdf2_sha256$870000$XD8TEP7ibIBwM17gQtfnNF$/wBRNgbH62hCEvEiW40B2ZaFM6XATk2JTKUKNH8hXcw=",
+      "first_name": "John",
+      "last_name": "Doe",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "INDIVIDUAL",
+      "is_verified": true,
+      "is_deleted": false,
+      "is_active": true,
+      "date_joined": "2024-02-05T11:20:00Z",
+      "created_at": "2024-02-05T11:20:00Z",
+      "updated_at": "2024-02-05T11:20:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 3,
+    "fields": {
+      "email": "individual2@example.com",
+      "password": "pbkdf2_sha256$870000$PFBl2bJmHsatDQOx4HDsRm$pLAa7idMrbmKKFzmOJ6mtFEX6VJuKW9coagi0MSH6Lg=",
+      "first_name": "Anna",
+      "last_name": "Smith",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "INDIVIDUAL",
+      "is_verified": true,
+      "is_deleted": false,
+      "is_active": true,
+      "date_joined": "2024-03-12T14:45:00Z",
+      "created_at": "2024-03-12T14:45:00Z",
+      "updated_at": "2024-03-12T14:45:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 4,
+    "fields": {
+      "email": "company1@example.com",
+      "password": "pbkdf2_sha256$870000$BAjbQj4mdZEH6FZZRCeofA$fvrqeTnQtNo8agNL0mu5nAvYAWa+MtIN4/UopyQYN+E=",
+      "first_name": "Company",
+      "last_name": "Owner1",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-04-01T08:05:00Z",
+      "created_at": "2024-04-01T08:05:00Z",
+      "updated_at": "2024-04-01T08:05:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 5,
+    "fields": {
+      "email": "company2@example.com",
+      "password": "pbkdf2_sha256$870000$qVTQ30MMlyjzzB1cOITQe7$l5kMjUx2VG0UhjyLnKdd533rQ1fBhoeeaitM51cPrBw=",
+      "first_name": "Company",
+      "last_name": "Owner2",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-05-18T16:40:00Z",
+      "created_at": "2024-05-18T16:40:00Z",
+      "updated_at": "2024-05-18T16:40:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 6,
+    "fields": {
+      "email": "member1@example.com",
+      "password": "pbkdf2_sha256$870000$ghibqLIvzeTBOj1hZ2lBTy$mKQAV/oH79qowazY9wt6GP5+ZCcUFNwMMnN4QjDixUE=",
+      "first_name": "Member",
+      "last_name": "One",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY_MEMBER",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-06-22T10:10:00Z",
+      "created_at": "2024-06-22T10:10:00Z",
+      "updated_at": "2024-06-22T10:10:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 7,
+    "fields": {
+      "email": "member2@example.com",
+      "password": "pbkdf2_sha256$870000$IgRZ8QSg7sFSRui3O4E5WD$9e+otpgwdYjh27KdIUuxsf4LTT3y63Emo9OVc6gvZuc=",
+      "first_name": "Member",
+      "last_name": "Two",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY_MEMBER",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-07-09T13:35:00Z",
+      "created_at": "2024-07-09T13:35:00Z",
+      "updated_at": "2024-07-09T13:35:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 8,
+    "fields": {
+      "email": "member3@example.com",
+      "password": "pbkdf2_sha256$870000$C3pmL5HyTLAR2EUWZKqCOb$MbgH3VDeGMCHyE3ty6tPNworO/KxVGbA+GeoTkOwquY=",
+      "first_name": "Member",
+      "last_name": "Three",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY_MEMBER",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-08-14T17:25:00Z",
+      "created_at": "2024-08-14T17:25:00Z",
+      "updated_at": "2024-08-14T17:25:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 9,
+    "fields": {
+      "email": "member4@example.com",
+      "password": "pbkdf2_sha256$870000$XRW8ilA0jRyXc5k5Tu7hqA$hT5R0j6YGcgKN9DWtlr9bt1AAmqHDVOP3WzCThtPvl0=",
+      "first_name": "Member",
+      "last_name": "Four",
+      "language": 1,
+      "currency": 1,
+      "is_landlord": true,
+      "landlord_type": "COMPANY_MEMBER",
+      "is_verified": true,
+      "is_active": true,
+      "date_joined": "2024-09-03T12:50:00Z",
+      "created_at": "2024-09-03T12:50:00Z",
+      "updated_at": "2024-09-03T12:50:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 10,
+    "fields": {
+      "email": "user1@example.com",
+      "password": "pbkdf2_sha256$870000$IMwgTFMCzzBQLvYhO0lRB7$6KSx20ec6bLf51+6fLKeepvXAzh9jAIjvoH8yPuI2Yc=",
+      "first_name": "Simple",
+      "last_name": "User1",
+      "language": 1,
+      "currency": 1,
+      "is_active": true,
+      "date_joined": "2024-10-11T15:05:00Z",
+      "created_at": "2024-10-11T15:05:00Z",
+      "updated_at": "2024-10-11T15:05:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 11,
+    "fields": {
+      "email": "user2@example.com",
+      "password": "pbkdf2_sha256$870000$7Be0JBAfWbqaiZMJGiPf3G$iQFmJmVMmapMZ3XjHb4U3zxsCAKcP6v20jVC+JwFaqc=",
+      "first_name": "Simple",
+      "last_name": "User2",
+      "language": 1,
+      "currency": 1,
+      "is_active": true,
+      "date_joined": "2024-11-19T09:55:00Z",
+      "created_at": "2024-11-19T09:55:00Z",
+      "updated_at": "2024-11-19T09:55:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 12,
+    "fields": {
+      "email": "user3@example.com",
+      "password": "pbkdf2_sha256$870000$WQ9SrIXHNv3WGa1fYjpl4l$pg0MpcLwCMKEuKB1yLcvw6E+CbeP1OD+EnxT6Jljj04=",
+      "first_name": "Simple",
+      "last_name": "User3",
+      "language": 1,
+      "currency": 1,
+      "is_active": true,
+      "date_joined": "2024-12-07T18:15:00Z",
+      "created_at": "2024-12-07T18:15:00Z",
+      "updated_at": "2024-12-07T18:15:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 13,
+    "fields": {
+      "email": "user4@example.com",
+      "password": "pbkdf2_sha256$870000$LmZHu6kLvgVAMykNyIDAjQ$mafRGfoOIjyaQWqlbzTV1h7n1JJUo/e+gqUAnUiF9kA=",
+      "first_name": "Simple",
+      "last_name": "User4",
+      "language": 1,
+      "currency": 1,
+      "is_active": true,
+      "date_joined": "2025-01-08T10:30:00Z",
+      "created_at": "2025-01-08T10:30:00Z",
+      "updated_at": "2025-01-08T10:30:00Z"
+    }
+  },
+  {
+    "model": "properties.user",
+    "pk": 14,
+    "fields": {
+      "email": "user5@example.com",
+      "password": "pbkdf2_sha256$870000$Nk8Xipnx7NkXO3BE6YAgc2$FFWlHZe+QT8/7QwnzXo34ZL8Md93ZSJ8BlcWkjHS8xU=",
+      "first_name": "Simple",
+      "last_name": "User5",
+      "language": 1,
+      "currency": 1,
+      "is_active": true,
+      "date_joined": "2025-02-03T14:20:00Z",
+      "created_at": "2025-02-03T14:20:00Z",
+      "updated_at": "2025-02-03T14:20:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 1,
+    "fields": {
+      "user": 1,
+      "phone": "+10000000001",
+      "gender": "M",
+      "citizenship": "USA",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-01-10T09:15:00Z",
+      "updated_at": "2024-01-10T09:15:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 2,
+    "fields": {
+      "user": 2,
+      "phone": "+10000000002",
+      "gender": "F",
+      "citizenship": "Canada",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-02-05T11:20:00Z",
+      "updated_at": "2024-02-05T11:20:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 3,
+    "fields": {
+      "user": 3,
+      "phone": "+10000000003",
+      "gender": "F",
+      "citizenship": "UK",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-03-12T14:45:00Z",
+      "updated_at": "2024-03-12T14:45:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 4,
+    "fields": {
+      "user": 4,
+      "phone": "+10000000004",
+      "gender": "M",
+      "citizenship": "Germany",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-04-01T08:05:00Z",
+      "updated_at": "2024-04-01T08:05:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 5,
+    "fields": {
+      "user": 5,
+      "phone": "+10000000005",
+      "gender": "M",
+      "citizenship": "France",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-05-18T16:40:00Z",
+      "updated_at": "2024-05-18T16:40:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 6,
+    "fields": {
+      "user": 6,
+      "phone": "+10000000006",
+      "gender": "F",
+      "citizenship": "Italy",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-06-22T10:10:00Z",
+      "updated_at": "2024-06-22T10:10:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 7,
+    "fields": {
+      "user": 7,
+      "phone": "+10000000007",
+      "gender": "M",
+      "citizenship": "Spain",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-07-09T13:35:00Z",
+      "updated_at": "2024-07-09T13:35:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 8,
+    "fields": {
+      "user": 8,
+      "phone": "+10000000008",
+      "gender": "F",
+      "citizenship": "Netherlands",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-08-14T17:25:00Z",
+      "updated_at": "2024-08-14T17:25:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 9,
+    "fields": {
+      "user": 9,
+      "phone": "+10000000009",
+      "gender": "M",
+      "citizenship": "Sweden",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-09-03T12:50:00Z",
+      "updated_at": "2024-09-03T12:50:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 10,
+    "fields": {
+      "user": 10,
+      "phone": "+10000000010",
+      "gender": "F",
+      "citizenship": "Norway",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-10-11T15:05:00Z",
+      "updated_at": "2024-10-11T15:05:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 11,
+    "fields": {
+      "user": 11,
+      "phone": "+10000000011",
+      "gender": "M",
+      "citizenship": "Finland",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-11-19T09:55:00Z",
+      "updated_at": "2024-11-19T09:55:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 12,
+    "fields": {
+      "user": 12,
+      "phone": "+10000000012",
+      "gender": "F",
+      "citizenship": "Denmark",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2024-12-07T18:15:00Z",
+      "updated_at": "2024-12-07T18:15:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 13,
+    "fields": {
+      "user": 13,
+      "phone": "+10000000013",
+      "gender": "M",
+      "citizenship": "Belgium",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2025-01-08T10:30:00Z",
+      "updated_at": "2025-01-08T10:30:00Z"
+    }
+  },
+  {
+    "model": "properties.userprofile",
+    "pk": 14,
+    "fields": {
+      "user": 14,
+      "phone": "+10000000014",
+      "gender": "F",
+      "citizenship": "Switzerland",
+      "theme": "LIGHT",
+      "receive_email_notifications": true,
+      "receive_push_notifications": true,
+      "created_at": "2025-02-03T14:20:00Z",
+      "updated_at": "2025-02-03T14:20:00Z"
+    }
+  }
+]

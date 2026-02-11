@@ -17,7 +17,7 @@ from properties.serializers.landlord_profiles import (
     LandlordProfileSerializer, CompanyMembershipCreateSerializer, CompanyMembershipBasePublicSerializer,
     CompanyMembershipBaseSerializer, CompanyMembershipSerializer,
 )
-from properties.serializers.language import LanguageSerializer
+from properties.serializers.language import LanguageBaseSerializer, LanguageSerializer
 from properties.serializers.location import LocationCreateSerializer, LocationPublicSerializer, LocationSerializer
 from properties.serializers.location_types import CountrySerializer, RegionSerializer, CitySerializer
 from properties.serializers.payment_method import PaymentMethodSerializer
@@ -34,7 +34,7 @@ from properties.serializers.review import (
     ReviewPropertyOwnerSerializer
 )
 from properties.serializers.user import (
-    UserCreateSerializer, UserBasePublicSerializer, UserBaseSerializer,UserLoginSerializer, UserSerializer
+    UserCreateSerializer, UserBasePublicSerializer, UserBaseSerializer, UserLoginSerializer, UserSerializer
 )
 
 from properties.serializers.user_landlord_base import UserLandlordCreateSerializer

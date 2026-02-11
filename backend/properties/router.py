@@ -6,7 +6,7 @@ urlpatterns = [
 
     path('filters/', PropertyFiltersAV.as_view(), name='filters-list'),
     path('auth/', include('properties.urls.auth')),
-    path('cancellation_policies/', include('properties.urls.cancellation_policy')),
+    path('cancellation_policies.json/', include('properties.urls.cancellation_policy')),
     path('currencies/', include('properties.urls.currency')),
     path('discounts/', include('properties.urls.discounts')),
     path('host/', include('properties.urls.landlord_profiles')),

@@ -1,0 +1,80 @@
+[
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 1,
+    "fields": {
+      "name": "Flexible Standard",
+      "type": "FLEXIBLE",
+      "description": "Allows free cancellation up to 24 hours before check-in without any penalty.",
+      "free_cancellation_days": 1,
+      "refund_percentage_after_deadline": "50.00",
+      "created_at": "2024-01-01T09:00:00Z",
+      "updated_at": "2024-01-01T09:00:00Z"
+    }
+  },
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 2,
+    "fields": {
+      "name": "Flexible Extended",
+      "type": "FLEXIBLE",
+      "description": "Guests can cancel up to 3 days before check-in and get full refund.",
+      "free_cancellation_days": 3,
+      "refund_percentage_after_deadline": "25.00",
+      "created_at": "2024-01-02T09:10:00Z",
+      "updated_at": "2024-01-02T09:10:00Z"
+    }
+  },
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 3,
+    "fields": {
+      "name": "Moderate Standard",
+      "type": "MODERATE",
+      "description": "Guests can cancel up to 5 days before check-in for full refund. After that, 50% refund.",
+      "free_cancellation_days": 5,
+      "refund_percentage_after_deadline": "50.00",
+      "created_at": "2024-01-03T09:20:00Z",
+      "updated_at": "2024-01-03T09:20:00Z"
+    }
+  },
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 4,
+    "fields": {
+      "name": "Moderate Extended",
+      "type": "MODERATE",
+      "description": "Cancellation allowed up to 7 days before check-in. After deadline, 30% refund.",
+      "free_cancellation_days": 7,
+      "refund_percentage_after_deadline": "30.00",
+      "created_at": "2024-01-04T09:30:00Z",
+      "updated_at": "2024-01-04T09:30:00Z"
+    }
+  },
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 5,
+    "fields": {
+      "name": "Strict Standard",
+      "type": "STRICT",
+      "description": "Cancellation allowed only up to 14 days before check-in. No refund after deadline.",
+      "free_cancellation_days": 14,
+      "refund_percentage_after_deadline": "0.00",
+      "created_at": "2024-01-05T09:40:00Z",
+      "updated_at": "2024-01-05T09:40:00Z"
+    }
+  },
+  {
+    "model": "properties.cancellationpolicy",
+    "pk": 6,
+    "fields": {
+      "name": "Strict Extended",
+      "type": "STRICT",
+      "description": "Guests must cancel at least 21 days in advance to get any refund. Otherwise, no refund.",
+      "free_cancellation_days": 21,
+      "refund_percentage_after_deadline": "0.00",
+      "created_at": "2024-01-06T09:50:00Z",
+      "updated_at": "2024-01-06T09:50:00Z"
+    }
+  }
+]

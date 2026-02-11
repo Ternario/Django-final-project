@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Dict, Any, List
 
 import json
@@ -8,6 +9,7 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
+from base_config.settings import BASE_DIR
 from properties.models import Currency
 from properties.utils.currency import request_currency_rate
 from properties.utils.error_messages.currency import CURRENCY_ERRORS
@@ -41,9 +43,10 @@ class Command(BaseCommand):
         """
         self.stdout.write('🔹 Loading base fixtures...')
 
+        fixtures_dri_path: str = os.path.join(BASE_DIR, 'properties', 'fixtures')
+
         fixture_files = [
-            'amenities.json',
-            'locations.json',
+            f for f in os.listdir(fixtures_dri_path) if f.endswith('.json') and f != 'currencies.json'
         ]
 
         for fixture_file in fixture_files:
@@ -73,7 +76,7 @@ class Command(BaseCommand):
 
         rates: Dict[str, float | int] = results['conversion_rates']
 
-        with open('properties/fixtures/base_currencies.json', 'r', encoding='utf-8') as f:
+        with open('properties/fixtures/currencies.json', 'r', encoding='utf-8') as f:
             currencies_default_data: List[Dict[str, str]] = json.load(f)
 
             if not currencies_default_data:

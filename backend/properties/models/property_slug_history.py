@@ -8,6 +8,8 @@ class PropertySlugHistory(models.Model):
     old_slug = models.SlugField(max_length=255, unique=True, verbose_name=_('Old slug'))
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = models.Manager()
+
     class Meta:
         verbose_name = _('Property slug history')
         verbose_name_plural = _('Property slug histories')

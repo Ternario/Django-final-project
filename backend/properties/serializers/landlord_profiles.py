@@ -48,12 +48,15 @@ class LandlordProfileCreateSerializer(ModelSerializer):
         if not match_phone_number(phone):
             errors['phone'] = LANDLORD_PROFILE_ERRORS['phone']
 
+        if landlord_type == LandlordType.NONE.value[0]:
+            errors['type'] = LANDLORD_PROFILE_ERRORS['type']
+
         if (
                 landlord_type == LandlordType.INDIVIDUAL.value[0]
                 and
                 name != f'{created_by.first_name} {created_by.last_name}'
         ):
-            non_field_errors.append(LANDLORD_PROFILE_ERRORS['user_full_name'])
+            non_field_errors.append(LANDLORD_PROFILE_ERRORS['name'])
 
         if non_field_errors:
             errors['non_field_errors'] = non_field_errors

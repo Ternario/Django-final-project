@@ -1,0 +1,112 @@
+[
+  {
+    "model": "properties.discount",
+    "pk": 1,
+    "fields": {
+      "created_by": 1,
+      "is_admin_created": true,
+      "landlord_profile": null,
+      "name": "Welcome Discount",
+      "description": "Welcome discount for new users, 10% off on all properties.",
+      "type": "WELCOM",
+      "value_type": "PERCENTAGE",
+      "currency": 1,
+      "value": "10.00",
+      "priority": 1,
+      "valid_from": "2026-01-01T00:00:00Z",
+      "valid_until": "2026-12-31T23:59:59Z",
+      "compatible": true,
+      "status": "ACTIVE",
+      "created_at": "2026-02-11T09:00:00Z",
+      "updated_at": "2026-02-11T09:00:00Z"
+    }
+  },
+  {
+    "model": "properties.discount",
+    "pk": 2,
+    "fields": {
+      "created_by": 1,
+      "is_admin_created": true,
+      "landlord_profile": null,
+      "name": "Winter Season Discount 2025",
+      "description": "Seasonal discount for winter months (Dec-Feb).",
+      "type": "SEASONAL",
+      "value_type": "PERCENTAGE",
+      "currency": 1,
+      "value": "15.00",
+      "priority": 2,
+      "valid_from": "2025-12-01T00:00:00Z",
+      "valid_until": "2026-02-28T23:59:59Z",
+      "compatible": true,
+      "status": "ACTIVE",
+      "created_at": "2025-02-11T09:10:00Z",
+      "updated_at": "2025-02-11T09:10:00Z"
+    }
+  },
+  {
+    "model": "properties.discount",
+    "pk": 3,
+    "fields": {
+      "created_by": 1,
+      "is_admin_created": true,
+      "landlord_profile": null,
+      "name": "Winter Season Discount 2026",
+      "description": "Seasonal discount for winter months (Dec-Feb).",
+      "type": "SEASONAL",
+      "value_type": "PERCENTAGE",
+      "currency": 1,
+      "value": "15.00",
+      "priority": 2,
+      "valid_from": "2026-12-01T00:00:00Z",
+      "valid_until": "2027-02-28T23:59:59Z",
+      "compatible": true,
+      "status": "SCHEDULED",
+      "created_at": "2026-02-11T09:10:00Z",
+      "updated_at": "2026-02-11T09:10:00Z"
+    }
+  },
+  {
+    "model": "properties.discount",
+    "pk": 4,
+    "fields": {
+      "created_by": 1,
+      "is_admin_created": true,
+      "landlord_profile": null,
+      "name": "Spring Season Discount",
+      "description": "Seasonal discount for spring months (Mar-May).",
+      "type": "SEASONAL",
+      "value_type": "FIXED",
+      "currency": 1,
+      "value": "50.00",
+      "priority": 3,
+      "valid_from": "2026-03-01T00:00:00Z",
+      "valid_until": "2026-05-31T23:59:59Z",
+      "compatible": true,
+      "status": "SCHEDULED",
+      "created_at": "2026-02-11T09:20:00Z",
+      "updated_at": "2026-02-11T09:20:00Z"
+    }
+  },
+  {
+    "model": "properties.discount",
+    "pk": 5,
+    "fields": {
+      "created_by": 1,
+      "is_admin_created": true,
+      "landlord_profile": null,
+      "name": "Summer Season Discount",
+      "description": "Seasonal discount for summer months (Jun-Aug).",
+      "type": "SEASONAL",
+      "value_type": "PERCENTAGE",
+      "currency": 1,
+      "value": "15.00",
+      "priority": 4,
+      "valid_from": "2026-06-01T00:00:00Z",
+      "valid_until": "2026-08-31T23:59:59Z",
+      "compatible": true,
+      "status": "SCHEDULED",
+      "created_at": "2026-02-11T09:30:00Z",
+      "updated_at": "2026-02-11T09:30:00Z"
+    }
+  }
+]

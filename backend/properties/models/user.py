@@ -38,6 +38,7 @@ class User(AbstractUser, PermissionsMixin):
     is_deleted = models.BooleanField(default=False, verbose_name=_('Deleted'))
     deleted_at = models.DateTimeField(blank=True, null=True, verbose_name=_('Deleted at'))
 
+    date_joined = models.DateTimeField(blank=True, verbose_name=_('Date joined'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated at'))
     last_login = models.DateTimeField(blank=True, null=True, verbose_name=_('Last login'))

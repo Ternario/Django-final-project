@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 from rest_framework.views import APIView
 from rest_framework.generics import (
-    CreateAPIView, ListAPIView, RetrieveUpdateAPIView, get_object_or_404
+    ListAPIView, RetrieveUpdateAPIView, get_object_or_404
 )
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
@@ -31,25 +31,27 @@ from properties.utils.choices.time import CheckInTime, CheckOutTime
 
 
 @extend_schema(
-    request=None,
+    request=BookingCreateSerializer,
     responses={200: None},
-    description='Return check in/out time choices.'
+    description='Return check in/out time choices / create booking.'
 )
-class BookingTimeChoicesAV(APIView):
+class BookingAV(APIView):
     """
-    View to get list of check in and check out time.
+    API view for booking creation and time choice retrieval.
 
-    Example of GET request:
-    GET /properties/choices/
+    - GET: retrieve available check-in and check-out time options.
+    - POST: create a new booking for a specific property.
 
-    Response:
-    {
-        'check_in_time': [{'value': '11:00:00', 'label': '11:00'}, ...],
-        'check_out_time':  [{'value': '10:00:00', 'label': '10:00'}, ...]
-    }
+    The GET method returns available time choices based on
+    `CheckInTime` and `CheckOutTime`.
 
-    Permissions:
-            - IsAuthenticated: can only be used by an authorized user.
+    The POST method allows an authenticated user (guest) to create
+    a booking for the property specified by `p_id`. Booking creation
+    is validated using `CheckBookingCreatePermission` and
+    `BookingCreateSerializer`.
+
+    Permission:
+        - IsAuthenticated: only authenticated users can access this view.
     """
     permission_classes = [IsAuthenticated]
 
@@ -65,25 +67,13 @@ class BookingTimeChoicesAV(APIView):
             status=status.HTTP_200_OK
         )
 
-
-class BookingCAV(CreateAPIView):
-    """
-    API view for creating a new Booking.
-
-    Allows authenticated users (guests) to create a booking using the
-    `BookingCreateSerializer`. Only POST requests are supported.
-    """
-    permission_classes = [IsAuthenticated]
-    queryset = Booking.objects.all()
-    serializer_class = BookingCreateSerializer
-
-    def create(self, request, *args, **kwargs) -> Response:
+    def post(self, request, *args, **kwargs) -> Response:
         user: User = self.request.user
-        prop_id: int = self.kwargs['id']
+        prop_id: int = self.kwargs['p_id']
 
         property_ref: Property = CheckBookingCreatePermission(user, prop_id).check_and_get_property()
 
-        serializer: BookingCreateSerializer = self.get_serializer(
+        serializer: BookingCreateSerializer = BookingCreateSerializer(
             data=self.request.data, context={'user': user, 'property_ref': property_ref}
         )
 
@@ -134,7 +124,7 @@ class BookingRUAV(RetrieveUpdateAPIView):
         if self.request.method in SAFE_METHODS:
             queryset = queryset.select_related('property_ref', 'currency', 'payment_type', 'payment_method')
 
-        booking: Booking = get_object_or_404(queryset, id=self.kwargs['id'])
+        booking: Booking = get_object_or_404(queryset, id=self.kwargs['b_id'])
 
         self.check_object_permissions(self.request, booking)
 
@@ -199,4 +189,4 @@ class BookingPropertyOwnerRUAV(RetrieveUpdateAPIView):
                 'property_ref', 'guest', 'currency', 'payment_type', 'payment_method'
             )
 
-        return get_object_or_404(queryset, property_ref__owner__hash_id=hash_id, id=self.kwargs['id'])
+        return get_object_or_404(queryset, property_ref__owner__hash_id=hash_id, id=self.kwargs['b_id'])

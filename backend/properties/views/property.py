@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from properties.models import User, Currency, LandlordProfile
+    from properties.models import User, Currency, LandlordProfile, PropertySlugHistory
     from django.db.models import QuerySet
 
 from rest_framework import status
@@ -195,19 +195,45 @@ class PropertyPublicRAV(RetrieveAPIView):
     serializer_class = PropertySerializer
 
     def get_object(self) -> Property:
+        p_lookup: int | str = self.kwargs['p_lookup']
         queryset: QuerySet[Property] = self.get_queryset().select_related(
             'owner', 'detail', 'location', 'cancellation_policy'
         ).prefetch_related(
             'amenities', 'payment_types', 'property_images'
         )
 
-        return get_object_or_404(queryset, id=self.kwargs['p_id'])
+        if str(p_lookup).isdigit():
+            return get_object_or_404(queryset, id=int(p_lookup))
+
+        prop_obj: Property = queryset.filter(slug=p_lookup).first()
+
+        if prop_obj:
+            return prop_obj
+
+        old_slug: PropertySlugHistory = PropertySlugHistory.objects.filter(old_slug=p_lookup).select_related(
+            'property_ref'
+        ).first()
+
+        if old_slug:
+            return old_slug.property_ref
+
+        raise get_object_or_404(Property, pk=0)
 
     def retrieve(self, request, *args, **kwargs) -> Response:
         user: User = self.request.user
         currency: Currency = user_currency_or_default(self.request)
 
+        p_lookup = self.kwargs['p_lookup']
         instance: Property = self.get_object()
+
+        if not str(p_lookup).isdigit() and p_lookup != str(instance.slug):
+            redirect_url = request.build_absolute_uri(f"/property/{instance.slug}/")
+
+            return Response({
+                'redirect': True,
+                'new_slug': instance.slug,
+                'url': redirect_url
+            }, status=status.HTTP_301_MOVED_PERMANENTLY)
 
         calculator = DiscountCalculator(user, instance, currency)
         instance.pricing = calculator.calculate()

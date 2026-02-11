@@ -11,8 +11,8 @@ from rest_framework.serializers import (
 
 from properties.models.user import User
 
-from properties.serializers.language import LanguageSerializer
-from properties.serializers.currency import CurrencySerializer
+from properties.serializers.language import LanguageSerializer, LanguageBaseSerializer
+from properties.serializers.currency import CurrencySerializer, CurrencyBaseSerializer
 
 from properties.serializers.user_profile import UserProfileSerializer
 from properties.utils.choices.landlord_profile import LandlordType
@@ -129,8 +129,8 @@ class UserBaseSerializer(UserBasePublicSerializer):
 
 
 class UserSerializer(ModelSerializer):
-    language_display = LanguageSerializer(source='language', read_only=True)
-    currency_display = CurrencySerializer(source='currency', read_only=True)
+    language_display = LanguageBaseSerializer(source='language', read_only=True)
+    currency_display = CurrencyBaseSerializer(source='currency', read_only=True)
     landlord_type = CharField(source='get_landlord_type_display', read_only=True)
 
     class Meta:
