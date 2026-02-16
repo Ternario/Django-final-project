@@ -131,7 +131,7 @@ development server with:
 python manage.py runserver
 ```
 
-## 📄 API Documentation / Examples
+## 📄 API Documentation
 
 **_Explore and test the API endpoints_**
 
