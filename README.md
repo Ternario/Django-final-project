@@ -185,7 +185,7 @@ You can access it at:
 - **Planned Review Services**
     - Services for handling reviews and ratings will be implemented in future updates.
 
-## 🚀 Planned Features / Roadmap
+## 🚀 Planned Features
 
 **_Upcoming improvements and planned functionalities_**
 
