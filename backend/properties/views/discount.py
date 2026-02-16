@@ -230,6 +230,8 @@ class DiscountPropertyCAV(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        # DiscountApply.aplay_discount(serializer.data, discount)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -246,7 +248,7 @@ class DiscountPropertyLAV(ListAPIView):
     """
     permission_classes = [IsLandlord]
     serializer_class = DiscountPropertyBaseSerializer
-    filterset_fields = ['discount', 'property', 'added_by', 'is_active']
+    filterset_fields = ['discount', 'property_ref', 'added_by', 'is_active']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
@@ -260,7 +262,7 @@ class DiscountPropertyLAV(ListAPIView):
         CheckDiscountPropertyPermission(user, hash_id).base_access()
 
         return DiscountProperty.objects.filter(landlord_profile__hash_id=hash_id).select_related(
-            'discount', 'property'
+            'discount', 'property_ref'
         )
 
 
@@ -287,7 +289,7 @@ class DiscountPropertyRUV(RetrieveUpdateAPIView):
         if self.request.method in SAFE_METHODS:
             CheckDiscountPropertyPermission(user, hash_id).base_access()
 
-            queryset = queryset.select_related('discount', 'property', 'added_by')
+            queryset = queryset.select_related('discount', 'property_ref', 'added_by')
             return get_object_or_404(queryset, id=dp_id, landlord_profile__hash_id=hash_id)
 
         CheckDiscountPropertyPermission(user, hash_id).update_access()

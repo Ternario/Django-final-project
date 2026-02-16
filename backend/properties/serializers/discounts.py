@@ -239,7 +239,7 @@ class DiscountPropertyListCreateSerializer(ListSerializer):
 class DiscountPropertyCreateSerializer(ModelSerializer):
     class Meta:
         model = DiscountProperty
-        fields = ['id', 'discount', 'property', 'landlord_profile', 'added_by', 'is_active']
+        fields = ['id', 'discount', 'property_ref', 'landlord_profile', 'added_by', 'is_active']
         read_only_fields = ['discount', 'landlord_profile', 'added_by']
 
         list_serializer_class = DiscountPropertyListCreateSerializer
@@ -251,8 +251,8 @@ class DiscountPropertyCreateSerializer(ModelSerializer):
         return super().create(validated_data)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
-        property_ref: Property = attrs.get('property')
-        landlord_profile: LandlordProfile = attrs.get('landlord_profile')
+        property_ref: Property = attrs.get('property_ref')
+        landlord_profile: LandlordProfile = self.context['landlord_profile']
 
         if landlord_profile.pk != property_ref.owner_id:
             raise PermissionDenied(PERMISSION_ERRORS)

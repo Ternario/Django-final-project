@@ -1,5 +1,5 @@
 from typing import Any
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from django.db import models
 
@@ -30,6 +30,8 @@ class Property(models.Model):
                                      verbose_name=_('Base price'))
     taxes_fees = models.DecimalField(max_digits=8, decimal_places=2, validators=[MinValueValidator(Decimal('0.00'))],
                                      default=Decimal('0.00'), verbose_name=_('Taxes fees'))
+    total_price = models.DecimalField(max_digits=10, blank=True, decimal_places=2,
+                                      validators=[MinValueValidator(Decimal('10.00'))], verbose_name=_('Total price'))
     payment_types = models.ManyToManyField('PaymentType', related_name='properties', verbose_name=_('Payment type'))
     min_stay = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_('Min stay'))
     max_guests = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_('Max guests'))
@@ -80,6 +82,9 @@ class Property(models.Model):
                 PropertySlugHistory.objects.get_or_create(property_ref=self, old_slug=old_slug)
 
             self.slug = slug
+
+        if not self.total_price:
+            self.total_price = (self.base_price + self.taxes_fees).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
         if self.approval_status == PropertyApprovalStatus.PENDING.value[0] and self.owner.is_trusted:
             self.approval_status = PropertyApprovalStatus.AUTO_APPROVED.value[0]

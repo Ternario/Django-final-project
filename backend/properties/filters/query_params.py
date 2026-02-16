@@ -7,8 +7,8 @@ from properties.models import Property, Booking, Language, CompanyMembership, Am
 
 class PropertyFilter(FilterSet):
     city = CharFilter(field_name='location__city', method='filter_city', label='City')
-    price_gte = NumberFilter(method='filter_price_gte')
-    price_lte = NumberFilter(method='filter_price_lte')
+    # price_gte = NumberFilter(method='filter_price_gte')
+    # price_lte = NumberFilter(method='filter_price_lte')
     rating_gte = NumberFilter(field_name='rating', lookup_expr='gte')
     property_type = CharFilter(field_name='property_type', lookup_expr='iexact')
 
@@ -22,17 +22,17 @@ class PropertyFilter(FilterSet):
     def filter_city(self, queryset, name, value):
         return queryset.filter(property_ref__location__city=value)
 
-    def filter_price_gte(self, queryset, name, value):
-        total_price = ExpressionWrapper(F('base_price') + F('taxes_fees'), output_field=DecimalField(
-            max_digits=10, decimal_places=2
-        ))
-        return queryset.annotate(total_price=total_price).filter(total_price__gte=value)
-
-    def filter_price_lte(self, queryset, name, value):
-        total_price = ExpressionWrapper(F('base_price') + F('taxes_fees'), output_field=DecimalField(
-            max_digits=10, decimal_places=2
-        ))
-        return queryset.annotate(total_price=total_price).filter(total_price__lte=value)
+    # def filter_price_gte(self, queryset, name, value):
+    #     total_price = ExpressionWrapper(F('base_price') + F('taxes_fees'), output_field=DecimalField(
+    #         max_digits=10, decimal_places=2
+    #     ))
+    #     return queryset.annotate(total_price=total_price).filter(total_price__gte=value)
+    #
+    # def filter_price_lte(self, queryset, name, value):
+    #     total_price = ExpressionWrapper(F('base_price') + F('taxes_fees'), output_field=DecimalField(
+    #         max_digits=10, decimal_places=2
+    #     ))
+    #     return queryset.annotate(total_price=total_price).filter(total_price__lte=value)
 
     class Meta:
         model = Property

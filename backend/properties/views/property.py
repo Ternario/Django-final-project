@@ -227,7 +227,7 @@ class PropertyPublicRAV(RetrieveAPIView):
         instance: Property = self.get_object()
 
         if not str(p_lookup).isdigit() and p_lookup != str(instance.slug):
-            redirect_url = request.build_absolute_uri(f"/property/{instance.slug}/")
+            redirect_url = request.build_absolute_uri(f'/property/{instance.slug}/')
 
             return Response({
                 'redirect': True,

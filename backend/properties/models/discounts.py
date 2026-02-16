@@ -146,8 +146,8 @@ class Discount(models.Model):
 class DiscountProperty(models.Model):
     discount = models.ForeignKey('Discount', on_delete=models.PROTECT, related_name='discount_properties',
                                  verbose_name=_('Discount'))
-    property = models.ForeignKey('Property', on_delete=models.PROTECT, related_name='property_discounts',
-                                 verbose_name=_('Property'))
+    property_ref = models.ForeignKey('Property', on_delete=models.PROTECT, related_name='property_discounts',
+                                     verbose_name=_('Property'))
     landlord_profile = models.ForeignKey('LandlordProfile', on_delete=models.PROTECT,
                                          related_name='discount_property_landlords', verbose_name=_('Landlord profile'))
     added_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='added_discount_properties',
@@ -166,10 +166,10 @@ class DiscountProperty(models.Model):
     class Meta:
         verbose_name = _('Discount Property')
         verbose_name_plural = _('Discount Properties')
-        unique_together = ('discount', 'property', 'landlord_profile')
+        unique_together = ('discount', 'property_ref', 'landlord_profile')
 
     def __str__(self) -> str:
-        return f'Discount {self.discount_id} -> Property {self.property_id}'
+        return f'Discount {self.discount_id} -> Property {self.property_ref_id}'
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.full_clean()
