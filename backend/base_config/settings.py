@@ -140,6 +140,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
+STATIC_URL = 'static/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -170,13 +174,11 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_COOKIE_SAMESITE': 'None',
 }
-
-HASH_SALT = env.str('HASH_SALT')
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+# Base currency used for conversions in the database
 BASE_CURRENCY = env.str('BASE_CURRENCY')
 
 # SMTP-server Settings
@@ -189,12 +191,16 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 # Default sender email
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 
-# Default emails for support, errors,admins
+# Default emails for support, errors, admins
 SUPPORT_EMAILS = {
     'admin': env('SUPPORT_EMAIL_ADMIN'),
     'moderators': env('SUPPORT_EMAIL_MODERATORS'),
     'support': env('SUPPORT_EMAIL_SUPPORT'),
 }
+
+# Salt used to generate hash_id for landlord profiles
+HASH_SALT = env.str('HASH_SALT')
+
 # Token for generating a new token for the user for data depersonalization.
 USER_TOKEN_SECRET = env.str('USER_TOKEN_SECRET')
 
@@ -207,17 +213,7 @@ EXCHANGERATE_API_KEY = env.str('EXCHANGERATE_API_KEY')
 SITE_URL = env('SITE_URL')
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=False)
-
-CSRF_COOKIE_SAMESITE = 'None'
-SRF_COOKIE_SECURE = False
-
-STATIC_URL = 'static/'
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS')
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'My API',
