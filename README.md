@@ -1,13 +1,12 @@
 # RESTful API for a property booking platform
 
-- Project Overview / Introduction
+- Project Overview 
 - Tech Stack
-- Dependencies / Setup
-- Database / Seed Data
-- API Documentation / Examples
+- Dependencies 
+- Database 
+- API Documentation
 - Services Overview
-- Planned Features / Roadmap
-- Screenshots / Demo
+- Planned Features
 
 ## 📝 Project Overview
 
@@ -30,7 +29,7 @@
 - ⚛️ **React + Redux** – interactive frontend interface and state management
 - 🌐 **HTML & CSS** – responsive and modern UI styling
 
-## ⚙️ Dependencies / Setup
+## ⚙️ Dependencies 
 
 **_Environment Setup_**
 
@@ -47,8 +46,9 @@ BASE_CURRENCY=your_currency_code_in_capital_characters
 
 # Site & CORS
 SITE_URL=http://localhost:8000
-ALLOWED_HOSTS=127.0.0.1,localhost,localhost:3000
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://192.168.89.229:3000,http://127.0.0.1:8000
+ALLOWED_HOSTS=127.0.0.1,localhost
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+CORS_ALLOW_CREDENTIALS=True
 
 # Tokens & API Keys
 USER_TOKEN_SECRET=your_token_secret_here
@@ -94,7 +94,7 @@ Apply migrations:
 python manage.py migrate
 ```
 
-## 🛢️ Database / Seed Data
+## 🛢️ Database
 
 **_Populate initial data and fixtures_**
 
@@ -131,7 +131,7 @@ development server with:
 python manage.py runserver
 ```
 
-## 📄 API Documentation / Examples
+## 📄 API Documentation
 
 **_Explore and test the API endpoints_**
 
@@ -139,6 +139,14 @@ All API endpoints are fully documented and interactive via **Swagger UI**.
 You can access it at:
 
 `http://localhost:8000/api/docs/`
+
+**_Examples_**
+
+### User Login
+![User login endpoint](screenshots/swagger_login.png)
+
+### List Properties
+![List properties endpoint](screenshots/swagger_properties_list.png)
 
 ## 💻 Services Overview
 
@@ -177,7 +185,7 @@ You can access it at:
 - **Planned Review Services**
     - Services for handling reviews and ratings will be implemented in future updates.
 
-## 🚀 Planned Features / Roadmap
+## 🚀 Planned Features
 
 **_Upcoming improvements and planned functionalities_**
 
