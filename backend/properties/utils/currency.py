@@ -1,4 +1,3 @@
-import decimal
 from typing import Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -33,7 +32,7 @@ def get_default_currency() -> Currency:
     return instance
 
 
-def format_price(value: Decimal, rate: Decimal) -> decimal:
+def format_price(value: Decimal, rate: Decimal) -> Decimal:
     """
     Convert a monetary value to a different currency using the specified rate
     and format it as a string with two decimal places, rounded half up.

@@ -1,7 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
 from drf_spectacular.utils import extend_schema
+
+from properties.tasks.cascade_delete import user_soft_cascade_delete_task
+from properties.utils.choices.landlord_profile import LandlordType
 
 if TYPE_CHECKING:
     from django.db.models import QuerySet
@@ -16,7 +19,8 @@ from rest_framework.views import APIView
 from properties.permissions import IsOwnerUser
 from properties.models import User
 from properties.serializers import (
-    UserCreateSerializer, UserSerializer, UserLandlordCreateSerializer, UserLoginSerializer
+    UserCreateSerializer, UserSerializer, UserLandlordCreateSerializer, UserLoginSerializer,
+    UserLandlordActivateSerializer, UserLandlordDeactivateSerializer
 )
 from properties.managers.cookies import set_jwt_cookies
 
@@ -74,14 +78,83 @@ class UserRetrieveUpdateDeleteView(RetrieveUpdateDestroyAPIView):
         return user
 
     def destroy(self, request, *args, **kwargs) -> Response:
-        user = self.get_object()
-        user.soft_delete()
+        user: User = self.get_object()
+
+        user_soft_cascade_delete_task.delay(user.pk)
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
 
         return response
+
+
+@extend_schema(
+    request=UserLandlordActivateSerializer,
+    responses={200: None},
+    description='Return landlord type choices / activate/change landlord profile / type.'
+)
+class UserLandlordActivateUAV(APIView):
+    """
+    API view for activating a landlord profile for the authenticated user
+    and retrieving available landlord types.
+
+    - GET: return the list of available landlord types (`INDIVIDUAL`, `COMPANY`)
+      for selection during activation.
+    - PATCH: activate the authenticated user as a landlord and set the
+      selected `landlord_type` using `UserLandlordActivateSerializer`.
+    - Permissions: authentication is required (`IsAuthenticated`).
+
+    This view handles landlord activation flow, including type selection
+    and validation of business rules before activation.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs) -> Response:
+        i_key, i_label = LandlordType.INDIVIDUAL
+        c_key, c_label = LandlordType.COMPANY
+
+        landlord_type: List[Dict[str, str]] = [{'key': i_key, 'label': i_label}, {'key': c_key, 'label': c_label}]
+        return Response({'landlord_type': landlord_type}, status=status.HTTP_200_OK)
+
+    def patch(self, request, *args, **kwargs) -> Response:
+        user: User = request.user
+
+        serializer: UserLandlordActivateSerializer = UserLandlordActivateSerializer(
+            user, data=request.data, partial=True)
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    request=UserLandlordDeactivateSerializer,
+    responses={200: None},
+    description='Set landlord user to regular user.'
+)
+class UserLandlordDeactivateUAV(APIView):
+    """
+    API view for deactivating the landlord status of the authenticated user.
+
+    - POST: deactivate the user's landlord status using
+      `UserLandlordDeactivateSerializer`.
+    - Permissions: authentication is required (`IsAuthenticated`).
+
+    This view performs business validation (e.g., active landlord profiles
+    or company memberships) before allowing deactivation.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs) -> Response:
+        user: User = request.user
+
+        serializer: UserLandlordDeactivateSerializer = UserLandlordDeactivateSerializer(user)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserLoginView(APIView):
@@ -97,7 +170,7 @@ class UserLoginView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer: UserLoginSerializer = self.serializer_class(
-            data=self.request.data, context={'request': self.request}
+            data=request.data, context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
         user: User = serializer.validated_data['user']
@@ -116,7 +189,7 @@ class UserLoginView(APIView):
 @extend_schema(
     request=None,
     responses={204: None},
-    description="Logout user and invalidate tokens"
+    description='Logout user and invalidate tokens'
 )
 class LogoutUserView(APIView):
     """

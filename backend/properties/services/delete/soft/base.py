@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Union, Type
+from typing import Union, Type
 
 from properties.utils.choices.landlord_profile import LandlordType
-
-if TYPE_CHECKING:
-    from properties.models import User, LandlordProfile
 
 from abc import ABC, abstractmethod
 from django.core.exceptions import ValidationError, PermissionDenied
 
-from properties.models import Property, Booking
+from properties.models import User, LandlordProfile, Property
 
 from properties.services.delete.email.soft_admin import SoftAdminResponse
 from properties.services.delete.email.soft_user import SoftUserResponse
@@ -28,19 +25,22 @@ class BaseCascadeDelete(ABC):
     soft or cascade deletions on models such as User, Property, Review, Company, etc.
 
     This class provides:
-        - Validation of permissions and deletion reason.
+        - Permission and reason validation before deletion.
         - Abstract method `_check_active_bookings` to retrieve active bookings
           associated with the target model.
         - Notification handling for deletion success, failures due to active bookings,
           and unexpected errors.
         - Abstract methods `_delete` and `execute` to be implemented by subclasses
-          for the actual deletion logic.
+          to perform the actual deletion logic.
 
     Attributes:
-        SOFT_DELETE (str): Default string representing a soft deletion type.
+        SOFT_DELETE (str): Marker string representing a soft deletion type.
+        _INDIVIDUAL (str): Landlord type for individual landlords.
+        _COMPANY (str): Landlord type for company landlords.
+        _COMPANY_MEMBER (str): Landlord type for company member landlords.
         target_model (DeletableModel): Model instance that is being deleted.
         deleted_by (User): User performing the deletion.
-        reason (str): Reason provided for deletion.
+        reason (str | None): Reason provided for deletion.
         log_model (SoftLogModel): Logger instance for soft deletions.
         email_handler (SoftAdminResponse | SoftUserResponse): Handler for sending
             email notifications depending on the deletion context.
@@ -50,7 +50,7 @@ class BaseCascadeDelete(ABC):
     _COMPANY: str = LandlordType.COMPANY.value[0]
     _COMPANY_MEMBER: str = LandlordType.COMPANY_MEMBER.value[0]
 
-    def __init__(self, target_model: DeletableModel, deleted_by: User, reason: str,
+    def __init__(self, target_model: DeletableModel, deleted_by: User, reason: str | None,
                  email_handler: Type[SoftAdminResponse | SoftUserResponse]) -> None:
         self.target_model = target_model
         self.deleted_by = deleted_by
@@ -62,7 +62,7 @@ class BaseCascadeDelete(ABC):
     @abstractmethod
     def create(cls, target_model: DeletableModel, deleted_by: User, reason: str) -> BaseCascadeDelete:
         """
-        Factory method to create a deletion handler instance.
+        Factory method to create a concrete deletion handler.
 
         Args:
             target_model (DeletableModel): Model instance to delete.
@@ -73,29 +73,31 @@ class BaseCascadeDelete(ABC):
             BaseCascadeDelete: Instance of a concrete deletion handler.
 
         Raises:
-            ValidationError: If the target model is already deleted or reason is missing.
-            PermissionDenied: If the user lacks permissions to perform deletion.
+            ValidationError: If the target model is already deleted or the reason is missing.
+            PermissionDenied: If the user does not have permission to perform deletion.
         """
         pass
 
     @staticmethod
     def _prevalidate(target_user: User, deleted_by: User, reason: str) -> Type[SoftAdminResponse | SoftUserResponse]:
         """
-        Validate permissions and deletion reason before performing deletion.
+        Validate permissions and ensure a deletion reason is provided.
+
+        Determines whether the deletion is performed by the user themselves
+        or by an administrator/moderator, and returns the corresponding email handler class.
 
         Args:
             target_user (User): User who is the target of deletion.
             deleted_by (User): User attempting the deletion.
-            reason (str): Reason for deletion.
+            reason (str): Reason provided for deletion.
 
         Returns:
             Type[SoftAdminResponse | SoftUserResponse]: The appropriate email handler
-            class depending on whether the action is self-deletion or performed by
-            an administrator.
+            depending on whether deletion is self-performed or admin-performed.
 
         Raises:
             PermissionDenied: If `deleted_by` is None or lacks permissions.
-            ValidationError: If reason is required but missing.
+            ValidationError: If a required reason is missing.
         """
         if deleted_by is None:
             raise PermissionDenied({'permission': PERMISSION_ERRORS})
@@ -111,36 +113,26 @@ class BaseCascadeDelete(ABC):
         return SoftUserResponse
 
     @abstractmethod
-    def _check_active_bookings(self) -> List[Booking]:
-        """
-        Retrieve all active bookings related to the target model that would prevent deletion.
-
-        Returns:
-            List[Booking]: Active bookings preventing deletion.
-        """
-        pass
-
-    @abstractmethod
     def _delete(self) -> None:
         """
-        Execute the deletion logic (soft or cascade) for the target model.
+        Perform the actual deletion logic for the target model.
 
-        This method handle:
-            - Logging
-            - Cascade deletions
-            - Database operations
+        This method should handle:
+            - Logging the deletion event
+            - Cascade deletions of related objects
+            - Database operations to mark or remove the target instance
         """
         pass
 
     @abstractmethod
     def execute(self) -> None:
         """
-        Public entry point for performing the deletion.
+        Public method to execute the deletion workflow.
 
-        This method should:
-            - Check for active bookings
-            - Execute deletion if possible
-            - Handle notifications
-            - Catch and log any errors
+        Responsibilities include:
+            - Checking for active bookings and preventing deletion if any exist
+            - Executing `_delete` if deletion can proceed
+            - Handling success and failure notifications
+            - Catching and logging any unexpected errors
         """
         pass

@@ -2,7 +2,8 @@ from datetime import date
 from typing import Dict, List
 
 from django.core.exceptions import ValidationError
-from django.template.defaulttags import now
+from django.utils.timezone import now
+
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
@@ -24,9 +25,11 @@ class User(AbstractUser, PermissionsMixin):
     first_name = models.CharField(max_length=155, verbose_name=_('First Name'))
     last_name = models.CharField(max_length=155, verbose_name=_('Last Name'))
     date_of_birth = models.DateField(blank=True, null=True, verbose_name=_('Birthday'))
-    language = models.ForeignKey('Language', on_delete=models.PROTECT, blank=True, verbose_name=_('Language'))
-    currency = models.ForeignKey('Currency', on_delete=models.PROTECT, blank=True, verbose_name=_('Currency'))
-    is_landlord = models.BooleanField(default=False, verbose_name=_('Landlord'))
+    language = models.ForeignKey('Language', on_delete=models.PROTECT, blank=True,
+                                 verbose_name=_('Language'))
+    currency = models.ForeignKey('Currency', on_delete=models.PROTECT, blank=True,
+                                 verbose_name=_('Currency'))
+    is_landlord = models.BooleanField(blank=True, default=False, verbose_name=_('Landlord'))
     landlord_type = models.CharField(max_length=50, blank=True, choices=LandlordType.choices(),
                                      default=LandlordType.NONE.value[0], verbose_name=_('Landlord type'))
     is_verified = models.BooleanField(default=False, verbose_name=_('Verified'))
@@ -35,6 +38,7 @@ class User(AbstractUser, PermissionsMixin):
     is_admin = models.BooleanField(default=False, verbose_name=_('Admin'))
     is_moderator = models.BooleanField(default=False, verbose_name=_('Moderator'))
 
+    is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     is_deleted = models.BooleanField(default=False, verbose_name=_('Deleted'))
     deleted_at = models.DateTimeField(blank=True, null=True, verbose_name=_('Deleted at'))
 
@@ -99,13 +103,25 @@ class User(AbstractUser, PermissionsMixin):
     def soft_delete(self) -> None:
         if self.is_deleted:
             return
+
+        self.is_active = False
         self.is_deleted = True
         self.deleted_at = now()
-        self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+
+        if self.is_landlord:
+            self.is_landlord = False
+
+        if self.landlord_type != LandlordType.NONE.value[0]:
+            self.landlord_type = LandlordType.NONE.value[0]
+        self.save(update_fields=['is_active', 'is_deleted', 'deleted_at', 'is_landlord', 'landlord_type', 'updated_at'])
 
     def restore(self) -> None:
+        if not self.is_deleted:
+            return
+
+        self.is_active = True
         self.is_deleted = False
-        self.save(update_fields=['is_deleted', 'updated_at'])
+        self.save(update_fields=['is_active', 'is_deleted', 'updated_at'])
 
     def privacy_delete(self) -> None:
         self.username = f'deleted_{self.pk}'
@@ -122,6 +138,7 @@ class User(AbstractUser, PermissionsMixin):
         self.is_moderator = False
         self.is_landlord = False
         self.is_verified = False
+        self.is_active = False
         self.is_deleted = True
         self.password = ''
         self.deleted_at = now()

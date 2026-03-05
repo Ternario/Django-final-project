@@ -1,8 +1,6 @@
-from typing import TYPE_CHECKING, List, Union, Tuple, Dict
+from typing import List, Union, Tuple, Dict
 
-if TYPE_CHECKING:
-    from properties.models import User, LandlordProfile, Property, Booking
-
+from properties.models import User, LandlordProfile, Property, Booking
 from properties.services.delete.email.base import BaseEmailResponse
 from properties.services.delete.class_mixin.email import EmailResponseMixin
 from properties.utils.constants.email_subjects import EMAIL_SUBJECTS

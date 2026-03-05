@@ -1,24 +1,24 @@
 from __future__ import annotations
-
 from typing import Any, TYPE_CHECKING, Dict, List
 
 if TYPE_CHECKING:
     from django.core.files.uploadedfile import UploadedFile
-    from properties.models import LandlordProfile, Amenity, PaymentType, User
-    from decimal import Decimal
+    from properties.models import LandlordProfile, Amenity, PaymentType, User, Currency
 
-from rest_framework.serializers import ModelSerializer, CharField, DictField
+from decimal import Decimal
+from rest_framework.serializers import ModelSerializer, CharField, SerializerMethodField, DictField
 
 from base_config.settings import BASE_CURRENCY
 
 from properties.models import Property
+from properties.serializers.base_data import DiscountBaseSerializer
 from properties.serializers.location import LocationCreateSerializer, LocationPublicSerializer
 from properties.serializers.property_detail import PropertyDetailCreateSerializer, PropertyDetailSerializer
 from properties.serializers.property_image import PropertyImageSerializer
 from properties.serializers.amenities import AmenitySerializer
 from properties.serializers.cancellation_policy import CancellationPolicySerializer
 from properties.serializers.payment_type import PaymentTypeSerializer
-
+from properties.utils.currency import format_price
 from properties.utils.decorators import atomic_handel
 
 
@@ -86,7 +86,32 @@ class PropertyCreateSerializer(ModelSerializer):
         return prop
 
 
+class PropertyBaseFavoritesSerializer(ModelSerializer):
+    city = CharField(source='location.city', read_only=True)
+    property_type = CharField(source='get_property_type_display', read_only=True)
+    total_price = SerializerMethodField(read_only=True)
+    discounted_price = SerializerMethodField(read_only=True)
+    property_images = PropertyImageSerializer(many=True, read_only=True)
+    applied_discounts = DiscountBaseSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Property
+        fields = ['id', 'title', 'city', 'property_type', 'rating', 'total_price', 'discounted_price',
+                  'property_images', 'applied_discounts']
+
+    def get_total_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.total_price, currency.rate_to_base)
+
+    def get_discounted_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.discounted_price, currency.rate_to_base)
+
+
 class PropertyBaseSerializer(ModelSerializer):
+    owner = CharField(source='owner.name', read_only=True)
     city = CharField(source='location.city', read_only=True)
     property_type = CharField(source='get_property_type_display', read_only=True)
     property_area = CharField(source='details.property_area', read_only=True)
@@ -99,13 +124,26 @@ class PropertyBaseSerializer(ModelSerializer):
     sofa_beds = CharField(source='details.sofa_beds', read_only=True)
     number_of_bathrooms = CharField(source='details.number_of_bathrooms', read_only=True)
     property_images = PropertyImageSerializer(many=True, read_only=True)
-    pricing = DictField(read_only=True)
+    total_price = SerializerMethodField(read_only=True)
+    discounted_price = SerializerMethodField(read_only=True)
+    applied_discounts = DiscountBaseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Property
-        fields = ['id', 'title', 'description', 'property_type', 'city', 'rating', 'review_count', 'property_area',
-                  'floor', 'total_floors', 'number_of_rooms', 'total_beds', 'single_beds', 'double_beds', 'sofa_beds',
-                  'number_of_bathrooms', 'property_images', 'pricing']
+        fields = ['id', 'owner', 'title', 'description', 'property_type', 'city', 'rating', 'review_count',
+                  'property_area', 'floor', 'total_floors', 'number_of_rooms', 'total_beds', 'single_beds',
+                  'double_beds', 'sofa_beds', 'number_of_bathrooms', 'property_images', 'total_price',
+                  'discounted_price', 'applied_discounts']
+
+    def get_total_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.total_price, currency.rate_to_base)
+
+    def get_discounted_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.discounted_price, currency.rate_to_base)
 
 
 class PropertySerializer(ModelSerializer):
@@ -116,31 +154,24 @@ class PropertySerializer(ModelSerializer):
     payment_type = PaymentTypeSerializer(many=True, read_only=True)
     property_detail = PropertyDetailSerializer(read_only=True)
     property_images = PropertyImageSerializer(many=True, read_only=True)
-    cancellation_days = CharField(source='cancellation_policy.free_cancellation_days', read_only=True)
+    cancellation_policy = CancellationPolicySerializer(read_only=True)
     cancellation_description = CharField(source='cancellation_policy.description', read_only=True)
-    pricing = DictField(read_only=True)
+    applied_discounts = DiscountBaseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Property
-        exclude = ['slug', 'created_by', 'cancellation_policy', 'status', 'approval_status', 'auto_confirm_bookings',
+        exclude = ['slug', 'created_by', 'status', 'approval_status', 'auto_confirm_bookings',
                    'is_deleted', 'deleted_at', 'created_at', 'updated_at']
-
-
-class PropertyOwnerBaseSerializer(ModelSerializer):
-    property_type = CharField(source='get_property_type_display', read_only=True)
-
-    class Meta:
-        model = Property
-        fields = ['id', 'title', 'slug', 'property_type']
 
 
 class PropertyOwnerSerializer(ModelSerializer):
     property_type = CharField(source='get_property_type_display', read_only=True)
     amenities = AmenitySerializer(many=True)
     payment_type = PaymentTypeSerializer(many=True)
+    status_display = CharField(source='get_status_display', read_only=True)
     cancellation_policy = CancellationPolicySerializer(read_only=True)
     property_images = PropertyImageSerializer(many=True, read_only=True)
-    pricing = DictField(read_only=True)
+    applied_discounts = DiscountBaseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Property
@@ -163,3 +194,26 @@ class PropertyOwnerSerializer(ModelSerializer):
         instance.save()
 
         return instance
+
+
+class PropertyBookingCreateSerializer(ModelSerializer):
+    location = LocationPublicSerializer(read_only=True)
+    cancellation_policy = CancellationPolicySerializer(read_only=True)
+    total_price = SerializerMethodField(read_only=True)
+    discounted_price = SerializerMethodField(read_only=True)
+    applied_discounts = DiscountBaseSerializer(many=True, read_only=True)
+    discounts_constraints = DictField(read_only=True)
+
+    class Meta:
+        model = Property
+        fields = ['id', 'title', 'location', 'cancellation_policy', 'total_price', 'discounted_price', 'rating']
+
+    def get_total_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.total_price, currency.rate_to_base)
+
+    def get_discounted_price(self, obj: Property) -> Decimal:
+        currency: Currency = self.context['currency']
+
+        return format_price(obj.discounted_price, currency.rate_to_base)

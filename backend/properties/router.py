@@ -3,7 +3,6 @@ from django.urls import path, include
 from properties.views.filters import PropertyFiltersAV
 
 urlpatterns = [
-
     path('filters/', PropertyFiltersAV.as_view(), name='filters-list'),
     path('auth/', include('properties.urls.auth')),
     path('cancellation_policies/', include('properties.urls.cancellation_policy')),

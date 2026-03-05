@@ -1,6 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from properties.tasks.service import rating_updater_task
+from properties.utils.choices.review import ReviewStatus
+from properties.utils.pagination import ReviewPagination
+
 if TYPE_CHECKING:
     from django.db.models import QuerySet
     from properties.models import User
@@ -53,6 +57,8 @@ class ReviewCAV(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        rating_updater_task.delay(serializer.instance.property_ref_id)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -74,7 +80,7 @@ class ReviewPublicLAV(ListAPIView):
     permission_classes = [AllowAny]
     authentication_classes = []
     serializer_class = ReviewListSerializer
-
+    pagination_class = ReviewPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['rating', 'created_at']
     ordering_fields = ['rating', 'created_at']
@@ -85,7 +91,9 @@ class ReviewPublicLAV(ListAPIView):
             return Review.objects.none()
 
         p_id: int = self.kwargs['p_id']
-        return Review.objects.published(property_ref_id=p_id).select_related('owner_response_by', 'moderator_notes_by')
+        return Review.objects.filter(
+            property_ref_id=p_id, status__in=[ReviewStatus.PUBLISHED.value[0], ReviewStatus.SOFT_DELETED.value[0]]
+        ).select_related('owner_response_by', 'moderator_notes_by')
 
 
 class ReviewAuthorLAV(ListAPIView):
@@ -103,9 +111,9 @@ class ReviewAuthorLAV(ListAPIView):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewAuthorListSerializer
-
+    pagination_class = ReviewPagination
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['property_ref', 'rating', 'created_at']
+    filterset_fields = ['property_ref', 'rating', 'status', 'created_at']
     ordering_fields = ['rating', 'created_at']
     ordering = ['-created_at']
 
@@ -147,13 +155,15 @@ class ReviewRUDAV(RetrieveUpdateDestroyAPIView):
 
         return get_object_or_404(queryset, pk=r_id, author_id=user.pk)
 
-    def perform_destroy(self, instance) -> None:
-        instance.soft_delete()
+    def perform_destroy(self, instance: Review) -> None:
+        instance.user_delete()
 
     def destroy(self, request, *args, **kwargs) -> Response:
-        instance = self.get_object()
+        instance: Review = self.get_object()
 
         self.perform_destroy(instance)
+
+        rating_updater_task.delay(instance.property_ref_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -178,7 +188,7 @@ class ReviewPropertyOwnerRUAV(RetrieveUpdateAPIView):
     manage responses to reviews of their property.
     """
     permission_classes = [IsLandlord]
-    queryset = Review.objects.published()
+    queryset = Review.objects.all()
     serializer_class = ReviewPropertyOwnerSerializer
 
     def get_object(self):
@@ -189,7 +199,9 @@ class ReviewPropertyOwnerRUAV(RetrieveUpdateAPIView):
 
         CheckRelatedPropertyModelsPermission(user, hash_id, p_id).access()
 
-        queryset: QuerySet[Review] = self.get_queryset()
+        queryset: QuerySet[Review] = self.get_queryset().filter(
+            status__in=[ReviewStatus.PUBLISHED.value[0], ReviewStatus.SOFT_DELETED.value[0]]
+        )
 
         if self.request.method in SAFE_METHODS:
             queryset = queryset.select_related('owner_response_by', 'moderator_notes_by')

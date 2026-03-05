@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Union, Tuple, Dict
 
 if TYPE_CHECKING:
-    from properties.models import User, LandlordProfile, Property, Booking
+    from properties.models import Booking
 
+from properties.models import User, LandlordProfile, Property
 from abc import ABC, abstractmethod
 from django.core.mail import send_mail, EmailMultiAlternatives, send_mass_mail
 from django.template.loader import render_to_string
@@ -93,7 +94,7 @@ class BaseEmailResponse(ABC):
             subject (str): Subject line of the email.
             message (str): Plain text body of the email.
             emails_list (Optional[List[str]]): List of recipient addresses.
-                Defaults to the user who initiated the delete.
+                Defaults to the user who initiated the deletion.
         """
         recipient_list: List[str] = [self.deleted_by] if not emails_list else emails_list
 

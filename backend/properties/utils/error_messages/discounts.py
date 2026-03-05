@@ -22,6 +22,16 @@ DISCOUNT_ERRORS: Dict[str, str] = {
     'permission': _('hash_id and discount_id must be provided to check discount permissions.')
 }
 
+DISCOUNT_PROPERTY_ERRORS: Dict[str, str] = {
+    'owner': _('Property not mach to the owner.'),
+    'discount_type': _('Referral or welcome Discount types is not applicable to properties.'),
+    'discount_not_available': _('Discount not available.'),
+    'discount_not_active': _('You cannot activate discount property model, discount not active.'),
+    'discount_scheduled': _('You can only schedule or remove a model.'),
+    'status': _('You cannot remove expired model.')
+
+}
+
 DISCOUNT_USER_ERRORS: Dict[str, str] = {
     'booking': _('No matched bookings found.')
 }

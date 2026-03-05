@@ -1,17 +1,18 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING, Dict, Any, List
 
 if TYPE_CHECKING:
     from properties.models import User
-from datetime import datetime, date
+
+from datetime import datetime
 
 from django.utils import timezone
-from rest_framework.serializers import ModelSerializer, ValidationError, CharField, SerializerMethodField
+from rest_framework.serializers import ModelSerializer, ValidationError, CharField
 
 from properties.models import Review, Booking
 from properties.serializers.user import UserBasePublicSerializer
 from properties.utils.error_messages.review import REVIEW_ERRORS
+from properties.utils.choices.review import ReviewStatus
 
 
 class ReviewCreateSerializer(ModelSerializer):
@@ -44,7 +45,7 @@ class ReviewCreateSerializer(ModelSerializer):
         if rating < 5 and not feedback:
             non_field_errors.append(REVIEW_ERRORS['feedback_required'])
 
-        if not Booking.objects.inactive(guest_id=author.pk, property_ref_id=booking.property_ref_id).exists():
+        if not Booking.objects.filter(guest_id=author.pk, property_ref_id=booking.property_ref_id).exists():
             non_field_errors.append(REVIEW_ERRORS['no_booking'])
 
         if booking.is_active:
@@ -56,7 +57,9 @@ class ReviewCreateSerializer(ModelSerializer):
         if booking.cancelled_at < check_cancelled_datetime:
             non_field_errors.append(REVIEW_ERRORS['cancelled_before_start'])
 
-        if Review.objects.published(author_id=author.pk, booking_id=booking.pk).exists():
+        if Review.objects.filter(
+                author_id=author.pk, booking_id=booking.pk, status=ReviewStatus.PUBLISHED.value[0]
+        ).exists():
             non_field_errors.append(REVIEW_ERRORS['duplicate'])
 
         if non_field_errors:
@@ -77,29 +80,11 @@ class ReviewListSerializer(ModelSerializer):
 
 class ReviewAuthorListSerializer(ModelSerializer):
     status = CharField(source='get_status_display', read_only=True)
-    booking_date = SerializerMethodField('get_booking_date', read_only=True)
     property_name = CharField(source='property_ref.title', read_only=True)
 
     class Meta:
         model = Review
-        fields = ['id', 'booking_date', 'author', 'property_ref', 'property_name', 'rating', 'feedback', 'status']
-
-    def get_booking_date(self) -> str:
-        booking: Booking = self.instance.booking
-        check_in: date = booking.check_in_date
-        check_out: date = booking.check_out_date
-
-        if check_in.year == check_out.year and check_in.month == check_out.month:
-            month: str = check_in.strftime('%b')
-            return f'{check_in.day} - {check_out.day} {month} {check_in.year}'
-
-        if check_in.year == check_out.year:
-            return f'{check_in.day}.{check_in.month} - {check_out.day}.{check_out.month} {check_out.year}'
-
-        check_in_formatted: str = check_in.strftime('%d.%m.%Y')
-        check_out_formatted: str = check_out.strftime('%d.%m.%Y')
-
-        return f'{check_in_formatted} - {check_out_formatted}'
+        fields = ['id', 'author', 'property_ref', 'property_name', 'rating', 'feedback', 'status']
 
 
 class ReviewAuthorSerializer(ModelSerializer):

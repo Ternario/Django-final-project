@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from typing import Any, TYPE_CHECKING, Dict, List
 
 if TYPE_CHECKING:
@@ -27,36 +26,46 @@ from properties.utils.regex_patterns import match_phone_number
 class LandlordProfileCreateSerializer(ModelSerializer):
     class Meta:
         model = LandlordProfile
-        exclude = ['created_by_token', 'is_trusted', 'is_verified', 'is_deleted', 'deleted_at', 'updated_at']
+        exclude = ['type', 'created_by_token', 'is_trusted', 'is_verified', 'is_deleted', 'deleted_at', 'updated_at']
         read_only_fields = ['created_by', 'hash_id']
 
     @atomic_handel
     def create(self, validated_data: Dict[str, Any]) -> LandlordProfile:
-        validated_data['created_by'] = self.context['user']
+        user: User = self.context['user']
+        validated_data['created_by'] = user
+        validated_data['type'] = user.landlord_type
 
         return super().create(validated_data)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         created_by: User = self.context['user']
-        landlord_type: str = attrs.get('type')
         phone: str = attrs.get('phone')
         name: str = attrs.get('user_full_name')
 
         errors: Dict[str, str | List[str]] = {}
         non_field_errors: List[str] = []
 
-        if not match_phone_number(phone):
-            errors['phone'] = LANDLORD_PROFILE_ERRORS['phone']
-
-        if landlord_type == LandlordType.NONE.value[0]:
+        if created_by.landlord_type not in [LandlordType.INDIVIDUAL.value[0], LandlordType.COMPANY.value[0]]:
             errors['type'] = LANDLORD_PROFILE_ERRORS['type']
 
         if (
-                landlord_type == LandlordType.INDIVIDUAL.value[0]
+                created_by.landlord_type == LandlordType.INDIVIDUAL.value[0] and
+                LandlordProfile.objects.filter(created_by_id=created_by.pk, is_deleted=False).exists()
+        ):
+            non_field_errors.append(LANDLORD_PROFILE_ERRORS['multiple_individual'])
+
+        if not match_phone_number(phone):
+            errors['phone'] = LANDLORD_PROFILE_ERRORS['phone']
+
+        if (
+                created_by.landlord_type == LandlordType.INDIVIDUAL.value[0]
                 and
                 name != f'{created_by.first_name} {created_by.last_name}'
         ):
             non_field_errors.append(LANDLORD_PROFILE_ERRORS['name'])
+
+        if not match_phone_number(phone):
+            errors['phone'] = LANDLORD_PROFILE_ERRORS['phone']
 
         if non_field_errors:
             errors['non_field_errors'] = non_field_errors
@@ -184,11 +193,26 @@ class CompanyMembershipCreateSerializer(ModelSerializer):
         exclude = ['user_token', 'user_full_name', 'created_at', 'updated_at', 'is_deleted', 'deleted_at']
         read_only_fields = ['company']
 
+    @atomic_handel
     def create(self, validated_data: Dict[str, Any]) -> CompanyMembership:
-        validated_data['user'] = self.context['user']
+        user: User = self.context['user']
+        validated_data['user'] = user
         validated_data['company'] = self.context['landlord_profile']
 
+        if not user.is_landlord:
+            user.is_landlord = True
+            user.landlord_type = LandlordType.COMPANY_MEMBER.value[0]
+            user.save(update_fields=['is_landlord', 'landlord_type', 'updated_at'])
+
         return super().create(validated_data)
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        user: User = self.context['user']
+
+        if user.is_landlord and user.landlord_type != LandlordType.COMPANY_MEMBER.value[0]:
+            raise ValidationError({'non_field_errors': LANDLORD_PROFILE_ERRORS['wrong_user_type']})
+
+        return attrs
 
 
 class CompanyMembershipBasePublicSerializer(ModelSerializer):

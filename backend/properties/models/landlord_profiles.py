@@ -1,8 +1,5 @@
 from __future__ import annotations
-
 from typing import Dict, Any, List, TYPE_CHECKING
-
-from properties.utils.regex_patterns import match_phone_number
 
 if TYPE_CHECKING:
     from properties.models import User
@@ -90,8 +87,14 @@ class LandlordProfile(models.Model):
 
         non_field_errors: List[str] = []
 
-        if not match_phone_number(str(self.phone)):
-            non_field_errors.append(LANDLORD_PROFILE_ERRORS['phone'])
+        if self.created_by.landlord_type not in [LandlordType.INDIVIDUAL.value[0], LandlordType.COMPANY.value[0]]:
+            errors['type'] = LANDLORD_PROFILE_ERRORS['type']
+
+        if (
+                self.created_by.landlord_type == LandlordType.INDIVIDUAL.value[0] and
+                LandlordProfile.objects.filter(created_by_id=self.created_by.pk).exists()
+        ):
+            non_field_errors.append(LANDLORD_PROFILE_ERRORS['multiple_individual'])
 
         if (
                 self.type == LandlordType.INDIVIDUAL.value[0]

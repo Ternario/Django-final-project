@@ -2,14 +2,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Dict, Tuple
 
 if TYPE_CHECKING:
-    from properties.models import LandlordProfile, User
     from mypy.typeshed.stdlib.datetime import datetime
 
 import logging
 from django.utils.timezone import now
 
 from base_config import settings
-from properties.models import Booking, Property
+from properties.models import Booking, Property, LandlordProfile
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +82,7 @@ class EmailResponseMixin:
         Returns:
             str: The fully formatted message string ready for sending.
         """
-        if isinstance(self.target_model, User):
+        if self.target_model._meta.model_name == 'user':
             context: Dict[str, str | int] = {
                 'email': self.target_model.email,
                 'pk': self.target_model.pk,

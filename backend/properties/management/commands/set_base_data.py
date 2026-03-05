@@ -49,6 +49,24 @@ class Command(BaseCommand):
             f for f in os.listdir(fixtures_dri_path) if f.endswith('.json') and f != 'currencies.json'
         ]
 
+        if 'languages.json' in fixture_files:
+            try:
+                call_command('loaddata', 'languages.json', verbosity=0)
+                self.stdout.write(self.style.SUCCESS(f'✅ Loaded fixture: languages.json'))
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'❌ Failed to load fixture languages.json: {e}'))
+
+            fixture_files.remove('languages.json')
+
+        if 'users.json' in fixture_files:
+            try:
+                call_command('loaddata', 'users.json', verbosity=0)
+                self.stdout.write(self.style.SUCCESS(f'✅ Loaded fixture: users.json'))
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f'❌ Failed to load fixture users.json: {e}'))
+
+            fixture_files.remove('users.json')
+
         for fixture_file in fixture_files:
             try:
                 call_command('loaddata', fixture_file, verbosity=0)
@@ -122,5 +140,5 @@ class Command(BaseCommand):
             - Provides clear colored output for success (✅), warning (⚠️), and error (❌) messages.
             - Designed to be run as a management command via manage.py.
         """
-        self._load_fixtures()
         self._update_currencies()
+        self._load_fixtures()

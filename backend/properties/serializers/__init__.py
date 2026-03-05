@@ -1,4 +1,7 @@
 from properties.serializers.amenities import AmenityCategorySerializer, AmenitySerializer
+from properties.serializers.base_data import (
+    UserLandlordCreateSerializer, PropertyOwnerBaseSerializer, DiscountBaseSerializer
+)
 from properties.serializers.booking import (
     BookingCreateSerializer, BookingBaseSerializer, BookingGuestSerializer, BookingOwnerSerializer,
     BookingCancellationSerializer
@@ -7,10 +10,10 @@ from properties.serializers.cancellation_policy import CancellationPolicyBaseSer
 from properties.serializers.currency import CurrencyBaseSerializer, CurrencySerializer
 from properties.serializers.deletion_log import DeletionLogSerializer, DeletionLogBaseDetailSerializer
 from properties.serializers.discounts import (
-    AppliedDiscountSerializer, DiscountCreateSerializer, DiscountBaseSerializer,
+    AppliedDiscountSerializer, DiscountCreateSerializer,
     DiscountPublicSerializer, DiscountSerializer, DiscountPropertyCreateSerializer, DiscountPropertyBaseSerializer,
     DiscountPropertySerializer, DiscountUserCreateSerializer, DiscountUserBaseSerializer, DiscountUserSerializer,
-    DiscountUserPropertyOwnerSerializer,
+    DiscountUserPropertyOwnerSerializer
 )
 from properties.serializers.landlord_profiles import (
     LandlordProfileCreateSerializer, LandlordProfileBaseSerializer, LandlordProfilePublicSerializer,
@@ -23,8 +26,8 @@ from properties.serializers.location_types import CountrySerializer, RegionSeria
 from properties.serializers.payment_method import PaymentMethodSerializer
 from properties.serializers.payment_type import PaymentTypeSerializer
 from properties.serializers.property import (
-    PropertyCreateSerializer, PropertyBaseSerializer, PropertySerializer, PropertyOwnerBaseSerializer,
-    PropertyOwnerSerializer,
+    PropertyCreateSerializer,PropertyBaseFavoritesSerializer, PropertyBaseSerializer, PropertySerializer,
+    PropertyOwnerSerializer, PropertyBookingCreateSerializer
 )
 from properties.serializers.property_detail import PropertyDetailCreateSerializer, PropertyDetailSerializer
 from properties.serializers.property_image import PropertyImageSerializer, PropertyImageDestroySerializer
@@ -34,8 +37,7 @@ from properties.serializers.review import (
     ReviewPropertyOwnerSerializer
 )
 from properties.serializers.user import (
-    UserCreateSerializer, UserBasePublicSerializer, UserBaseSerializer, UserLoginSerializer, UserSerializer
+    UserCreateSerializer, UserBasePublicSerializer, UserBaseSerializer, UserLoginSerializer, UserSerializer,
+    UserLandlordActivateSerializer, UserLandlordDeactivateSerializer
 )
-
-from properties.serializers.user_landlord_base import UserLandlordCreateSerializer
 from properties.serializers.user_profile import UserProfileSerializer

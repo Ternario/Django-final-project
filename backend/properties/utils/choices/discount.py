@@ -40,18 +40,24 @@ class DiscountUserStatus(ChoicesEnumMixin, Enum):
 
 class DiscountType(ChoicesEnumMixin, Enum):
     """
-    Defines the different types or sources of discounts available in the system.
+    Represents the different types or sources of discounts in the system.
 
-    - SEASONAL: A discount applied during specific seasons or promotional periods.
-    - COUPON: A discount that requires a coupon or promo code to activate.
-    - REFERRAL: A discount granted through a referral or invitation program.
-    - CUSTOM: A discount applicable under specific conditions.
+    Public discounts (affect list prices for properties):
+      - SEASONAL: Applied during specific seasons or promotional periods.
+      - OWNER_PROMO: Set manually by a property owner/landlord for one or more properties.
+
+    Private / user-specific discounts (do not affect general property list prices):
+      - COUPON: Requires a coupon or promo code to activate.
+      - REFERRAL: Granted through a referral or invitation program.
+      - WELCOME: Applied to new users as a welcome promotion.
+      - COMPENSATION: Granted to specific users, e.g., as a refund or compensation.
     """
     SEASONAL = ('SEASONAL', 'Seasonal')
+    OWNER_PROMO = ('OWNER_PROMO', 'Owner promo')
     COUPON = ('COUPON', 'Coupon')
     REFERRAL = ('REFERRAL', 'Referral')
     WELCOME = ('WELCOME ', 'Welcome')
-    CUSTOM = ('CUSTOM', 'Custom')
+    COMPENSATION = ('COMPENSATION', 'Compensation')
 
 
 class DiscountValueType(ChoicesEnumMixin, Enum):
@@ -63,3 +69,32 @@ class DiscountValueType(ChoicesEnumMixin, Enum):
     """
     PERCENTAGE = ('PERCENTAGE', 'Percentage')
     FIXED = ('FIXED', 'Fixed')
+
+
+class DiscountStackPolicy(ChoicesEnumMixin, Enum):
+    """
+    Defines how a discount behaves when combined with other discounts.
+
+    - STACKABLE: Can be combined with other discounts and applied together.
+    - EXCLUSIVE: Cannot be combined with any other discount.
+    - TYPE_EXCLUSIVE: Cannot be combined with other discounts of the same type,
+      but may be combined with discounts of different types.
+    """
+    STACKABLE = ('STACKABLE', 'Stackable')
+    EXCLUSIVE = ('EXCLUSIVE', 'Exclusive')
+    TYPE_EXCLUSIVE = ('TYPE_EXCLUSIVE', 'Type exclusive')
+
+
+class DiscountPropertyStatus(ChoicesEnumMixin, Enum):
+    """
+    Represents the lifecycle status of a discount assigned to a property.
+
+    - SCHEDULED: The discount is planned and will become active at a future date.
+    - ACTIVE: The discount is currently active and applied to the property.
+    - EXPIRED: The discount has reached its end date and is no longer active.
+    - REMOVED: The discount property was manually removed or deactivated before expiration.
+    """
+    SCHEDULED = ('SCHEDULED', 'Scheduled')
+    ACTIVE = ('ACTIVE', 'Active')
+    EXPIRED = ('EXPIRED', 'Expired')
+    REMOVED = ('REMOVED', 'Removed')

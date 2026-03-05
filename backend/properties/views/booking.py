@@ -4,14 +4,17 @@ from typing import TYPE_CHECKING, List, Type, Dict
 
 from drf_spectacular.utils import extend_schema
 
+from properties.services.discount.user_applier import DiscountUserApplier
+from properties.utils.currency import user_currency_or_default
+
 if TYPE_CHECKING:
-    from properties.models import User, Property
+    from properties.models import User, Property, Currency
     from rest_framework.serializers import Serializer
     from django.db.models import QuerySet
 
 from rest_framework.views import APIView
 from rest_framework.generics import (
-    ListAPIView, RetrieveUpdateAPIView, get_object_or_404
+    ListAPIView, RetrieveUpdateAPIView, get_object_or_404, CreateAPIView
 )
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
@@ -22,7 +25,7 @@ from properties.permissions import IsOwnerBooking, IsLandlord
 from properties.models import Booking
 from properties.serializers import (
     BookingCreateSerializer, BookingBaseSerializer, BookingGuestSerializer, BookingCancellationSerializer,
-    BookingOwnerSerializer
+    BookingOwnerSerializer, PropertyBookingCreateSerializer
 )
 
 from properties.filters.query_params import BookingFilter
@@ -31,24 +34,27 @@ from properties.utils.choices.time import CheckInTime, CheckOutTime
 
 
 @extend_schema(
-    request=BookingCreateSerializer,
+    request=PropertyBookingCreateSerializer,
     responses={200: None},
-    description='Return check in/out time choices / create booking.'
+    description='Return check in/out time choices / base property data.'
 )
 class BookingAV(APIView):
     """
-    API view for booking creation and time choice retrieval.
+    API view for retrieving booking-related data for a specific property.
 
-    - GET: retrieve available check-in and check-out time options.
-    - POST: create a new booking for a specific property.
+    - GET: retrieve property booking data along with available
+      check-in and check-out time options.
 
-    The GET method returns available time choices based on
-    `CheckInTime` and `CheckOutTime`.
+    The GET method returns:
+        - Serialized property data required for booking creation.
+        - User-specific discount constraints calculated by
+          `DiscountUserApplier`.
+        - Available time choices based on `CheckInTime`
+          and `CheckOutTime`.
 
-    The POST method allows an authenticated user (guest) to create
-    a booking for the property specified by `p_id`. Booking creation
-    is validated using `CheckBookingCreatePermission` and
-    `BookingCreateSerializer`.
+    The response includes pricing-related discount information
+    attached dynamically to the property instance and does not
+    persist any discount state in the database.
 
     Permission:
         - IsAuthenticated: only authenticated users can access this view.
@@ -56,24 +62,74 @@ class BookingAV(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs) -> Response:
+        user: User = self.request.user
+        currency: Currency = user_currency_or_default(self.request)
+        p_id: int = self.kwargs['p_id']
+
+        try:
+            prop_instance: Property = Property.objects.get(id=p_id).select_related(
+                'location', 'cancellation_policy'
+            ).prefetch_related(
+                'applied_discounts'
+            )
+        except Property.DoesNotExists:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        extra_discounts = DiscountUserApplier(user, prop_instance)
+        prop_instance.discounts_constraints = extra_discounts.execute()
+
+        serializer: PropertyBookingCreateSerializer = PropertyBookingCreateSerializer(prop_instance, context={
+            'currency': currency
+        })
+
         check_in: List[Dict[str, str]] = [{'key': key, 'label': label} for key, label in CheckInTime.choices()]
         check_out: List[Dict[str, str]] = [{'key': key, 'label': label} for key, label in CheckOutTime.choices()]
 
         return Response(
             {
+                'property_data': serializer.data,
                 'check_in_time': check_in,
                 'check_out_time': check_out
             },
             status=status.HTTP_200_OK
         )
 
-    def post(self, request, *args, **kwargs) -> Response:
+
+@extend_schema(
+    request=BookingCreateSerializer,
+    responses={200: None},
+    description='Create booking.'
+)
+class BookingCAV(CreateAPIView):
+    """
+    API view for booking creation.
+
+    - POST: create a new booking for a specific property.
+
+    The POST method:
+        - Validates that the user is allowed to create a booking
+          for the given property using `CheckBookingCreatePermission`.
+        - Validates booking input data using `BookingCreateSerializer`.
+        - Creates and saves a new booking instance.
+
+    Booking validation includes property availability checks
+    and business rule enforcement inside the serializer and
+    permission layer.
+
+    Permission:
+        - IsAuthenticated: only authenticated users can access this view.
+    """
+    permission_classes = [IsAuthenticated]
+    queryset = Booking.objects.all()
+    serializer_class = BookingCreateSerializer
+
+    def create(self, request, *args, **kwargs) -> Response:
         user: User = self.request.user
         prop_id: int = self.kwargs['p_id']
 
         property_ref: Property = CheckBookingCreatePermission(user, prop_id).check_and_get_property()
 
-        serializer: BookingCreateSerializer = BookingCreateSerializer(
+        serializer: BookingCreateSerializer = self.get_serializer(
             data=self.request.data, context={'user': user, 'property_ref': property_ref}
         )
 
@@ -98,7 +154,9 @@ class BookingLAV(ListAPIView):
 
     def get_queryset(self) -> QuerySet[Booking]:
         user: User = self.request.user
-        return Booking.objects.filter(guest_id=user.pk).select_related('property_ref', 'currency')
+        return Booking.objects.filter(guest_id=user.pk).select_related(
+            'property_ref', 'property_ref__location', 'currency'
+        )
 
 
 class BookingRUAV(RetrieveUpdateAPIView):
@@ -155,7 +213,7 @@ class BookingPropertyOwnerLAV(ListAPIView):
         CheckBookingPermission(user, hash_id).execute()
 
         return Booking.objects.filter(property_ref__owner__hash_id=hash_id).select_related(
-            'property_ref', 'currency'
+            'property_ref', 'property_ref__location', 'currency'
         )
 
 
