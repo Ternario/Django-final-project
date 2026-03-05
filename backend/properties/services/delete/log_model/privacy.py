@@ -2,8 +2,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Union
 
 if TYPE_CHECKING:
-    from properties.models import DeletionLog, LandlordProfile, Property, CompanyMembership, Review, Booking, Discount
+    from properties.models import DeletionLog, LandlordProfile
 
+from properties.models import Property, Review, Booking, CompanyMembership, Discount
 from properties.services.delete.log_model.base import BaseLogModel
 from properties.utils.decorators import db_errors
 
@@ -43,14 +44,20 @@ class PrivacyLogModel(BaseLogModel):
         """
         parent_log: DeletionLog = self._create_log_model(model, parent_log=parent_log)
 
-        properties: List[Property] = model.properties.all()
+        properties: List[Property] = list(Property.objects.felter(owner_id=model.pk))
 
-        if model.type == LandlordType.COMPANY.value[0]:
-            membership: List[CompanyMembership] = model.company_membership.all()
+        if model.type == LandlordType.INDIVIDUAL.value[0]:
+            booking_list: List[Booking] = Booking.objects.filter(prperty_ref__owner_id=self.landlord_profile[0].pk)
 
-            if membership:
-                for member in membership:
-                    self.single_model_soft(member, parent_log=parent_log)
+            if booking_list:
+                for booking in booking_list:
+                    booking.property_owner_privacy_delete()
+
+        membership: List[CompanyMembership] = list(CompanyMembership.objects.filter(company_id=model.pk))
+
+        if membership:
+            for member in membership:
+                self.single_model_soft(member, parent_log=parent_log)
 
         for prop in properties:
             self.single_model_soft(prop, parent_log=parent_log)

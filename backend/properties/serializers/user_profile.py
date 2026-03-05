@@ -4,7 +4,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer, CharField
 
 from properties.models import UserProfile
-from properties.serializers.property import PropertyBaseSerializer
 from properties.utils.error_messages.user import USER_ERRORS
 from properties.utils.regex_patterns import match_phone_number
 
@@ -14,7 +13,7 @@ class UserProfileSerializer(ModelSerializer):
 
     class Meta:
         model = UserProfile
-        exclude = ['user_token', 'created_at', 'updated_at']
+        exclude = ['user_token', 'created_at', 'updated_at', 'favorites']
         read_only_fields = ['user']
 
     def validate_phone(self, phone: str | None) -> str:

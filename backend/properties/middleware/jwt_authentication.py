@@ -5,7 +5,7 @@ if TYPE_CHECKING:
     from rest_framework_simplejwt.tokens import Token
     from django.http import HttpRequest, HttpResponse
 
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken, Token
+from rest_framework_simplejwt.tokens import Token
 from datetime import datetime
 from django.utils.deprecation import MiddlewareMixin
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
@@ -26,7 +26,7 @@ class JWTAuthenticationMiddleware(MiddlewareMixin):
         None
     """
 
-    def process_request(self, request) -> None:
+    def process_request(self, request: HttpRequest) -> None:
         """
         Process incoming HTTP requests to authenticate users based on JWT tokens.
 

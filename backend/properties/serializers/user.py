@@ -1,22 +1,23 @@
 from __future__ import annotations
-
 from typing import Dict, Any
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+
 from django.http import HttpRequest
 from rest_framework.serializers import (
     ModelSerializer, Serializer, ValidationError, CharField, SerializerMethodField, EmailField
 )
 
+from properties.models import CompanyMembership, LandlordProfile
 from properties.models.user import User
 
-from properties.serializers.language import LanguageSerializer, LanguageBaseSerializer
-from properties.serializers.currency import CurrencySerializer, CurrencyBaseSerializer
+from properties.serializers.language import LanguageBaseSerializer
+from properties.serializers.currency import CurrencyBaseSerializer
 
-from properties.serializers.user_profile import UserProfileSerializer
 from properties.utils.choices.landlord_profile import LandlordType
 from properties.utils.currency import get_default_currency
+from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
 
 from properties.utils.error_messages.user import USER_ERRORS
 from properties.utils.language import get_default_language
@@ -25,12 +26,11 @@ from properties.utils.serializers.user import validate_user_data
 
 class UserCreateSerializer(ModelSerializer):
     re_password = CharField(max_length=128, write_only=True, required=True)
-    user_profile = UserProfileSerializer(source='profile', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'is_landlord', 'landlord_type', 'password',
-                  're_password', 'user_profile']
+        fields = ['id', 'first_name', 'last_name', 'username', 'email', 'language', 'currency', 'password',
+                  're_password']
         extra_kwargs = {'password': {'write_only': True, 'required': True}}
 
     def create(self, validated_data: Dict[str, Any]) -> User:
@@ -104,12 +104,12 @@ class UserBasePublicSerializer(ModelSerializer):
         return f'{obj.first_name} {obj.last_name}'
 
 
-class UserBaseSerializer(UserBasePublicSerializer):
+class UserBaseSerializer(ModelSerializer):
     role = SerializerMethodField()
 
-    class Meta(UserBasePublicSerializer.Meta):
-        model = UserBasePublicSerializer.Meta.model
-        fields = UserBasePublicSerializer.Meta.fields + ['id', 'role']
+    class Meta:
+        model = User
+        fields = ['id', 'role']
 
     def get_role(self, obj: User) -> str:
         if obj.is_admin:
@@ -149,3 +149,68 @@ class UserSerializer(ModelSerializer):
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         return validate_user_data(attrs)
+
+
+class UserLandlordActivateSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'landlord_type', 'is_landlord']
+        read_only_fields = ['is_landlord']
+
+    def update(self, instance: User, validated_data: Dict[str, Any]) -> User:
+        instance.is_landlord = True
+        instance.landlord_type = validated_data['landlord_type']
+
+        instance.save(update_fields=['is_landlord', 'landlord_type'])
+
+        return instance
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        user: User = self.instance
+        landlord_type: str | None = attrs.get('landlord_type', None)
+
+        if not landlord_type:
+            raise ValidationError({'landlord_type': NOT_NULL_FIELD})
+
+        if landlord_type == user.landlord_type:
+            raise ValidationError({'non_field_errors': USER_ERRORS['active_type']})
+
+        if user.is_landlord:
+            if user.landlord_type == LandlordType.COMPANY_MEMBER.value[0]:
+                if CompanyMembership.objects.filter(user_id=user.pk, is_deleted=False).exists():
+                    raise ValidationError({'non_field_errors': USER_ERRORS['active_membership']})
+            else:
+                if LandlordProfile.objects.filter(
+                        created_by_id=user.pk, type=user.landlord_type, is_deleted=False
+                ).exists():
+                    raise ValidationError({'non_field_errors': USER_ERRORS['active_landlord']})
+
+        return attrs
+
+
+class UserLandlordDeactivateSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'landlord_type', 'is_landlord']
+        read_only_fields = ['landlord_type', 'is_landlord']
+
+    def update(self, instance: User, validated_data: Dict[str, Any]) -> User:
+        instance.is_landlord = False
+        instance.landlord_type = LandlordType.NONE.value[0]
+
+        instance.save(update_fields=['is_landlord', 'landlord_type'])
+
+        return instance
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        user: User = self.instance
+
+        if user.landlord_type in [LandlordType.INDIVIDUAL.value[0], LandlordType.COMPANY.value[0]]:
+            if LandlordProfile.objects.filter(created_by_id=user.pk, is_deleted=False).exists():
+                raise ValidationError({'non_field_errors': USER_ERRORS['deactivate_landlord_profile']})
+
+        if user.landlord_type == LandlordType.COMPANY_MEMBER.value[0]:
+            if CompanyMembership.objects.filter(user_id=user.pk, is_deleted=False).exists():
+                raise ValidationError({'non_field_errors': USER_ERRORS['active_membership']})
+
+        return attrs

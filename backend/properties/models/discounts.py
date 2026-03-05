@@ -15,16 +15,19 @@ from django.utils.translation import gettext_lazy as _
 
 from properties.managers.discount import CustomDiscountManager
 
-from properties.utils.choices.discount import DiscountValueType, DiscountType, DiscountStatus, DiscountUserStatus
+from properties.utils.choices.discount import (
+    DiscountValueType, DiscountType, DiscountStatus, DiscountUserStatus, DiscountStackPolicy, DiscountPropertyStatus
+)
 from properties.utils.currency import get_default_currency
-from properties.utils.error_messages.discounts import DISCOUNT_ERRORS
+from properties.utils.error_messages.discounts import DISCOUNT_ERRORS, DISCOUNT_PROPERTY_ERRORS
 from properties.utils.user_token_generation import make_user_token
+from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
 
 
 class Discount(models.Model):
     created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='discounts',
                                    verbose_name=_('Discount'))
-    created_by_token = models.CharField(max_length=64, blank=True, db_index=True, verbose_name=_('Created by token'))
+    created_by_token = models.CharField(max_length=64, blank=True, verbose_name=_('Created by token'))
     is_admin_created = models.BooleanField(default=False, verbose_name=_('Is admin created'))
     landlord_profile = models.ForeignKey('LandlordProfile', on_delete=models.PROTECT, blank=True, null=True,
                                          related_name='discount_landlords', verbose_name=_('Landlord profile'))
@@ -43,10 +46,9 @@ class Discount(models.Model):
     valid_from = models.DateTimeField(blank=True, null=True, verbose_name=_('Valid from'))
     valid_until = models.DateTimeField(blank=True, null=True, verbose_name=_('Valid until'))
 
-    compatible = models.BooleanField(default=True, verbose_name=_('Compatible'))
-    incompatible_with = models.ManyToManyField('self', blank=True, symmetrical=False,
-                                               related_name='incompatible_discounts',
-                                               verbose_name=_('Incompatible with'))
+    stack_policy = models.CharField(max_length=20, choices=DiscountStackPolicy.choices(),
+                                    default=DiscountStackPolicy.STACKABLE.value[0], verbose_name=_('Stack_policy'))
+    incompatible_with = models.ManyToManyField('self', blank=True, verbose_name=_('Incompatible with'))
 
     status = models.CharField(max_length=20, choices=DiscountStatus.choices(), default=DiscountStatus.DRAFT.value[0],
                               verbose_name=_('Status'))
@@ -108,15 +110,19 @@ class Discount(models.Model):
             self.currency = get_default_currency()
 
         if not self.priority:
-            if self.type == DiscountType.CUSTOM.value[0]:
-                self.priority = 10
+            if self.type == DiscountType.COMPENSATION.value[0]:
+                self.priority = 100
+            elif self.type == DiscountType.SEASONAL.value[0]:
+                self.priority = 90
+            elif self.type == DiscountType.OWNER_PROMO.value[0]:
+                self.priority = 70
             elif self.type == DiscountType.REFERRAL.value[0]:
-                self.priority = 20
-            elif self.type == DiscountType.COUPON.value[0]:
+                self.priority = 50
+            elif self.type == DiscountType.WELCOME.value[0]:
                 self.priority = 30
-            else:
-                self.priority = 40
-        super().save(*args, **kwargs)
+            elif self.type == DiscountType.COUPON.value[0]:
+                self.priority = 10
+            super().save(*args, **kwargs)
 
     def set_disabled(self) -> None:
         if self.status == DiscountStatus.DISABLED.value[0]:
@@ -152,8 +158,9 @@ class DiscountProperty(models.Model):
                                          related_name='discount_property_landlords', verbose_name=_('Landlord profile'))
     added_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='added_discount_properties',
                                  verbose_name=_('Added by'))
+    status = models.CharField(max_length=20, choices=DiscountPropertyStatus.choices(),
+                              default=DiscountPropertyStatus.SCHEDULED.value[0], verbose_name=_('Status'))
 
-    is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
     removed_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Removed at'))
     removed_by = models.ForeignKey('User', null=True, blank=True, related_name='removed_discount_properties',
                                    on_delete=models.SET_NULL, verbose_name=_('Removed by'))
@@ -171,33 +178,74 @@ class DiscountProperty(models.Model):
     def __str__(self) -> str:
         return f'Discount {self.discount_id} -> Property {self.property_ref_id}'
 
+    def clean(self) -> None:
+        super().clean()
+
+        non_field_errors: List[str] = []
+
+        if not self.discount_id:
+            raise ValidationError({'discount': NOT_NULL_FIELD})
+
+        if self.discount.type in [DiscountType.REFERRAL.value[0], DiscountType.WELCOME.value[0]]:
+            non_field_errors.append(DISCOUNT_PROPERTY_ERRORS['discount_type'])
+
+        if self.discount.status not in [DiscountStatus.ACTIVE.value[0], DiscountStatus.SCHEDULED.value[0]]:
+            non_field_errors.append(DISCOUNT_PROPERTY_ERRORS['discount_not_available'])
+
+        if (
+                self.discount.status != DiscountStatus.ACTIVE.value[0] and self.status ==
+                DiscountPropertyStatus.ACTIVE.value[0]
+        ):
+            non_field_errors.append(DISCOUNT_PROPERTY_ERRORS['discount_not_active'])
+
+        if (
+                self.discount.status == DiscountStatus.SCHEDULED.value[0] and self.status not in
+                [DiscountPropertyStatus.SCHEDULED.value[0], DiscountPropertyStatus.REMOVED.value[0]]
+        ):
+            non_field_errors.append(DISCOUNT_PROPERTY_ERRORS['discount_scheduled'])
+
+        if non_field_errors:
+            raise ValidationError({'non_field_errors': non_field_errors})
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         self.full_clean()
+
+        if (
+                self.discount.status == DiscountStatus.ACTIVE.value[0] and self.status ==
+                DiscountPropertyStatus.SCHEDULED.value[0]
+        ):
+            self.status = DiscountPropertyStatus.ACTIVE.value[0]
 
         if self.removed_by and not self.removed_at:
             self.removed_at = now()
 
         super().save(*args, **kwargs)
 
-    def set_deactivated(self, user: User) -> None:
-        if not self.is_active:
+    def set_removed(self, user: User) -> None:
+        if self.status == DiscountPropertyStatus.REMOVED.value[0]:
             return
 
-        self.is_active = False
+        if self.status == DiscountPropertyStatus.EXPIRED.value[0]:
+            raise ValidationError({'status': DISCOUNT_PROPERTY_ERRORS['status']})
+
+        self.status = DiscountPropertyStatus.REMOVED.value[0]
         self.removed_at = now()
         self.removed_by = user
 
-        self.save(update_fields=['is_active', 'removed_at', 'removed_by', 'updated_at'])
+        self.save(update_fields=['status', 'removed_at', 'removed_by', 'updated_at'])
 
     def set_active(self) -> None:
-        if self.is_active:
+        if self.status == DiscountPropertyStatus.ACTIVE.value[0]:
             return
 
-        self.is_active = True
+        if self.discount.status != DiscountStatus.ACTIVE.value[0]:
+            raise ValidationError({'non_field_errors': DISCOUNT_PROPERTY_ERRORS['discount_not_active']})
+
+        self.status = DiscountPropertyStatus.ACTIVE.value[0]
         self.removed_at = None
         self.removed_by = None
 
-        self.save(update_fields=['is_active', 'removed_at', 'removed_by', 'updated_at'])
+        self.save(update_fields=['status', 'removed_at', 'removed_by', 'updated_at'])
 
 
 class DiscountUser(models.Model):
@@ -207,7 +255,7 @@ class DiscountUser(models.Model):
                              verbose_name=_('User'))
     assigned_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True,
                                     related_name='assigned_discount_users', verbose_name=_('Assigned by'))
-    landlord_profile = models.ForeignKey('LandlordProfile', on_delete=models.PROTECT,
+    landlord_profile = models.ForeignKey('LandlordProfile', on_delete=models.PROTECT, blank=True, null=True,
                                          related_name='discount_user_landlords', verbose_name=_('Landlord profile'))
 
     code = models.CharField(max_length=32, blank=True, null=True, db_index=True, verbose_name=_('Code'))
@@ -225,6 +273,7 @@ class DiscountUser(models.Model):
     used_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Used at'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated at'))
 
     objects = models.Manager()
 
@@ -235,19 +284,3 @@ class DiscountUser(models.Model):
 
     def __str__(self) -> str:
         return f'Discount {self.discount_id} for User {self.user_id} ({self.status})'
-
-    def set_used(self) -> None:
-        if self.status == DiscountUserStatus.USED.value[0]:
-            return
-
-        self.status = DiscountUserStatus.USED.value[0]
-        self.used_at = now()
-
-        self.save(update_fields=['status', 'used_at'])
-
-    def set_expired(self) -> None:
-        if self.status == DiscountUserStatus.EXPIRED.value[0]:
-            return
-
-        self.status = DiscountUserStatus.EXPIRED.value[0]
-        self.save(update_fields=['fields'])

@@ -3,6 +3,9 @@ from typing import TYPE_CHECKING, List, Dict
 
 from drf_spectacular.utils import extend_schema
 
+from properties.tasks.service import update_user_company_member_to_regular_task
+from properties.tasks.cascade_delete import landlord_soft_cascade_delete_task
+from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
 from properties.utils.error_messages.permission import PERMISSION_ERRORS
 
 if TYPE_CHECKING:
@@ -12,7 +15,7 @@ if TYPE_CHECKING:
 from rest_framework.generics import (
     CreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, get_object_or_404, RetrieveAPIView
 )
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from django_filters.rest_framework import DjangoFilterBackend
@@ -154,10 +157,12 @@ class LandlordProfileRUDAV(RetrieveUpdateDestroyAPIView):
         return get_object_or_404(queryset, created_by_id=user.pk, hash_id=hash_id)
 
     def destroy(self, request, *args, **kwargs) -> Response:
+        user: User = self.request.user
         instance: LandlordProfile = self.get_object()
-        instance.soft_delete()
 
-        return Response({'detail': 'Landlord Profile was deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        landlord_soft_cascade_delete_task.delay(instance.pk, user.pk)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CompanyMembershipCAV(CreateAPIView):
@@ -177,7 +182,12 @@ class CompanyMembershipCAV(CreateAPIView):
 
         landlord_profile: LandlordProfile = CheckCompanyMembershipPermissions(user, hash_id).access_create()
 
-        added_user: User = get_object_or_404(User, email=self.request.data['email'])
+        email: str = self.request.data.get('email')
+
+        if not email:
+            raise ValidationError({'email': NOT_NULL_FIELD})
+
+        added_user: User = get_object_or_404(User, email=email)
 
         serializer: CompanyMembershipCreateSerializer = self.get_serializer(
             data=self.request.data, context={'user': added_user, 'landlord_profile': landlord_profile}
@@ -264,5 +274,6 @@ class CompanyMembershipRUDAV(RetrieveUpdateDestroyAPIView):
         instance: CompanyMembership = self.get_object()
         instance.soft_delete()
 
-        return Response({'detail': 'Company Member Profile was deleted successfully.'},
-                        status=status.HTTP_204_NO_CONTENT)
+        update_user_company_member_to_regular_task.delay(instance.user_id)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

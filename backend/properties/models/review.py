@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
@@ -13,7 +12,6 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
-from properties.managers.review import CustomReviewManager
 from properties.models import Booking
 from properties.utils.choices.review import ReviewStatus
 from properties.utils.constants.default_depersonalization_values import DELETED_USER_PLACEHOLDER
@@ -55,7 +53,7 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated at'))
 
-    objects = CustomReviewManager()
+    objects = models.Manager()
 
     def __str__(self) -> str:
         return f'Review by {self.author} to {self.property_ref}, ({self.rating}/5).'
@@ -88,7 +86,7 @@ class Review(models.Model):
         if self.rating < 5 and not self.feedback:
             non_field_errors.append(REVIEW_ERRORS['feedback_required'])
 
-        if not Booking.objects.inactive(guest=self.author, property_ref=self.property_ref).exists():
+        if not Booking.objects.filter(guest=self.author, property_ref=self.property_ref).exists():
             non_field_errors.append(REVIEW_ERRORS['no_booking'])
 
         if self.booking.is_active:
@@ -97,7 +95,9 @@ class Review(models.Model):
         if self.booking.cancelled_at is not None and self.booking.cancelled_at < self.check_cancelled_datetime:
             non_field_errors.append(REVIEW_ERRORS['cancelled_before_start'])
 
-        if Review.objects.published(author=self.author, booking=self.booking).exclude(id=self.pk).exists():
+        if Review.objects.filter(
+                author=self.author, booking=self.booking, status=ReviewStatus.PUBLISHED.value[0]
+        ).exclude(id=self.pk).exists():
             non_field_errors.append(REVIEW_ERRORS['duplicate'])
 
         if self.status == ReviewStatus.REJECTED.value[0] and not self.rejected_reason:
@@ -120,11 +120,20 @@ class Review(models.Model):
                 self.author_username = author.first_name
         super().save(*args, **kwargs)
 
+    def user_delete(self) -> None:
+        if self.is_deleted:
+            return
+
+        self.status = ReviewStatus.DELETED.value[0]
+        self.is_deleted = True
+        self.deleted_at = now()
+        self.save(update_fields=['status', 'is_deleted', 'deleted_at'])
+
     def soft_delete(self, feedback: str | None = None) -> None:
         if self.is_deleted:
             return
         self.author_username = DELETED_USER_PLACEHOLDER
-        self.status = ReviewStatus.DELETED.value[0]
+        self.status = ReviewStatus.SOFT_DELETED.value[0]
         self.feedback = feedback if feedback else ''
         self.is_deleted = True
         self.deleted_at = now()
@@ -134,7 +143,7 @@ class Review(models.Model):
         if not self.author:
             return
         self.author_username = DELETED_USER_PLACEHOLDER
-        self.author_token = make_user_token(self.author.pk)
+        self.author_token = make_user_token(self.author_id)
         self.author = None
         self.status = ReviewStatus.PRIVACY_REMOVED.value[0]
         self.feedback = feedback if feedback else ''

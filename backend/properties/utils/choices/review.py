@@ -12,8 +12,8 @@ class ReviewStatus(ChoicesEnumMixin, Enum):
     - DELETED: Review was deleted by the user or admin.
     - PRIVACY_REMOVED: Review anonymized for GDPR or privacy reasons.
     """
-
     PUBLISHED = ('PUBLISHED', 'Published')
     REJECTED = ('REJECTED', 'Rejected')
     DELETED = ('DELETED', 'Deleted')
+    SOFT_DELETED = ('SOFT_DELETED', 'Soft deleted')
     PRIVACY_REMOVED = ('PRIVACY_REMOVED', 'Privacy removed')

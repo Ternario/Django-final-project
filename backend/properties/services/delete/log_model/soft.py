@@ -1,9 +1,12 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List, Union
 
-if TYPE_CHECKING:
-    from properties.models import User, DeletionLog, LandlordProfile, Property, CompanyMembership, Review
+from properties.tasks.service import update_user_company_member_to_regular_task
 
+if TYPE_CHECKING:
+    from properties.models import User, LandlordProfile
+
+from properties.models import Property, CompanyMembership, Review, DeletionLog
 from properties.services.delete.log_model.base import BaseLogModel
 from properties.utils.decorators import db_errors
 from properties.utils.choices.landlord_profile import LandlordType
@@ -40,14 +43,15 @@ class SoftLogModel(BaseLogModel):
 
         parent_log: DeletionLog = self._create_log_model(model, reason, parent_log=parent_log)
 
-        properties: List[Property] = Property.objects.not_deleted(owner=model)
+        properties: List[Property] = list(Property.objects.not_deleted(owner_id=model.pk))
 
         if model.type == LandlordType.COMPANY.value[0]:
-            membership: List[CompanyMembership] = CompanyMembership.objects.filter(comapny_id=model.pk)
+            membership: List[CompanyMembership] = list(CompanyMembership.objects.filter(comapny_id=model.pk))
 
             if membership:
                 for member in membership:
                     self.single_model(member, parent_log=parent_log)
+                    update_user_company_member_to_regular_task.delay(member.user_id)
 
         for prop in properties:
             self.single_model(prop, parent_log=parent_log)

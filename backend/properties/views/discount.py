@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from properties.utils.choices.discount import DiscountType, DiscountStatus
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from properties.models import User
@@ -19,7 +17,6 @@ from properties.serializers import (
     DiscountUserCreateSerializer, DiscountUserBaseSerializer, DiscountUserSerializer,
     DiscountUserPropertyOwnerSerializer,
 )
-
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticated
@@ -30,6 +27,8 @@ from properties.models import (
 from properties.utils.check_permissions.discount import (
     CheckDiscountPermission, CheckDiscountPropertyPermission, CheckDiscountUserPermission
 )
+from properties.utils.choices.discount import DiscountType, DiscountStatus
+from properties.tasks.service import apply_discounts_task
 
 
 class DiscountCAV(CreateAPIView):
@@ -218,19 +217,19 @@ class DiscountPropertyCAV(CreateAPIView):
             user, hash_id
         ).get_landlord_profile_and_discount(discount_id)
 
-        is_list: bool = isinstance(self.request.data, list)
-
         serializer: DiscountPropertyCreateSerializer = self.get_serializer(
             data=self.request.data, context={
                 'discount': discount,
                 'landlord_profile': landlord_profile,
                 'user': user,
-            }, many=is_list
+            }, many=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        # DiscountApply.aplay_discount(serializer.data, discount)
+        dp_ids: List[int] = [dp.id for dp in serializer.instance]
+
+        apply_discounts_task.delay(dp_ids)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -248,7 +247,7 @@ class DiscountPropertyLAV(ListAPIView):
     """
     permission_classes = [IsLandlord]
     serializer_class = DiscountPropertyBaseSerializer
-    filterset_fields = ['discount', 'property_ref', 'added_by', 'is_active']
+    filterset_fields = ['discount', 'property_ref', 'added_by', 'status']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
@@ -284,12 +283,12 @@ class DiscountPropertyRUV(RetrieveUpdateAPIView):
         hash_id: str = self.kwargs['hash_id']
         dp_id: int = self.kwargs['dp_id']
 
-        queryset: QuerySet[DiscountProperty] = self.get_queryset()
+        queryset: QuerySet[DiscountProperty] = self.get_queryset().select_related('discount')
 
         if self.request.method in SAFE_METHODS:
             CheckDiscountPropertyPermission(user, hash_id).base_access()
 
-            queryset = queryset.select_related('discount', 'property_ref', 'added_by')
+            queryset = queryset.select_related('property_ref', 'added_by')
             return get_object_or_404(queryset, id=dp_id, landlord_profile__hash_id=hash_id)
 
         CheckDiscountPropertyPermission(user, hash_id).update_access()
@@ -302,6 +301,10 @@ class DiscountPropertyRUV(RetrieveUpdateAPIView):
 
         serializer: DiscountPropertySerializer = self.get_serializer(instance, context={'user': user}, partial=True)
         serializer.is_valid(raise_exception=True)
+
+        dp_ids: List[int] = [serializer.instance.pk]
+
+        apply_discounts_task.delay(dp_ids)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

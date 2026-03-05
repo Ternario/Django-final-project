@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'drf_spectacular',
+    'django_celery_beat',
 
     # local
     'properties.apps.PropertiesConfig'
@@ -175,7 +176,7 @@ SIMPLE_JWT = {
 
 HASH_SALT = env.str('HASH_SALT')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = env.str('EMAIL_BACKEND')
 
 BASE_CURRENCY = env.str('BASE_CURRENCY')
 
@@ -225,3 +226,9 @@ SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True,
     # 'SECURITY': [{'bearerAuth': []}],
 }
+
+CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

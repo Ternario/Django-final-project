@@ -13,31 +13,34 @@ from properties.models import User, Booking
 from properties.services.delete.soft.base import BaseCascadeDelete
 from properties.services.delete.email.soft_admin import SoftAdminResponse
 from properties.services.delete.email.soft_user import SoftUserResponse
-from properties.services.delete.class_mixin.booking import BookingCheckMixin
+from properties.services.delete.class_mixin.cascade_actions_mixin import CascadeActionsMixin
 
 from properties.utils.decorators import atomic_handel
 
 logger = logging.getLogger(__name__)
 
 
-class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
+class LandlordProfileCascadeDelete(BaseCascadeDelete, CascadeActionsMixin):
     """
-    Concrete implementation of `BaseCascadeDelete` for handling deletions of landlord profiles,
-    including both individual landlords and companies.
+    Concrete implementation of `BaseCascadeDelete` for handling soft deletions
+    of landlord profiles, including both individual landlords and companies.
 
     Supports:
         - Soft deletion of a landlord profile.
-        - Cascade deletion of associated models, including:
+        - Cascade handling of related models, including:
             - Properties owned by the landlord.
-            - Company memberships (if the profile is a company).
-        - Active booking checks before deletion.
+            - Company memberships if the profile represents a company.
+        - Checks for active bookings before deletion and prevents deletion if any exist.
         - Logging deletion events using `CreateLogModel`.
-        - Notifications on success, failure, or errors.
+        - Notifications on deletion success, failure, or unexpected errors.
 
     Attributes:
-        target_model (LandlordProfile): The landlord profile being deleted.
-        deleted_by (User): User initiating the deletion.
-        reason (str): Reason provided for the deletion.
+        target_model (LandlordProfile): The landlord profile instance being deleted.
+        deleted_by (User): User performing the deletion.
+        reason (str | None): Reason provided for the deletion.
+        log_model (SoftLogModel): Logger instance for deletions.
+        email_handler (SoftAdminResponse | SoftUserResponse): Handler for sending
+            email notifications depending on the deletion context.
     """
 
     @classmethod
@@ -45,8 +48,8 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
         """
         Factory method to create a LandlordProfileCascadeDelete handler.
 
-        Chooses the appropriate email handler (`SoftAdminResponse` or `SoftUserResponse`)
-        based on the executor and deletion reason.
+        Determines the appropriate email handler (`SoftAdminResponse` or `SoftUserResponse`)
+        based on who performs the deletion (admin/moderator vs. creator).
 
         Args:
             target_model (LandlordProfile): The landlord profile to delete.
@@ -57,8 +60,8 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
             LandlordProfileCascadeDelete: Instance of this deletion handler.
 
         Raises:
-            ValidationError: If the profile is already deleted.
-            PermissionDenied: If the user lacks permissions to delete.
+            ValidationError: If the landlord profile is already marked as deleted.
+            PermissionDenied: If the user lacks permissions to delete the profile.
         """
         if target_model.is_deleted:
             raise ValidationError({'detail': _('Landlord profile is already deleted.')})
@@ -66,7 +69,7 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
         email_handler: Type[SoftAdminResponse | SoftUserResponse] = cls._prevalidate(
             target_model.created_by, deleted_by, reason
         )
-        return cls(target_model, deleted_by, reason, email_handler)
+        return cls(target_model=target_model, deleted_by=deleted_by, reason=reason, email_handler=email_handler)
 
     def _check_active_bookings(self) -> List[Booking]:
         """
@@ -80,17 +83,17 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
     @atomic_handel
     def _delete(self) -> None:
         """
-        Perform the cascade deletion of the landlord profile and related models.
+        Perform the cascade deletion of the landlord profile and its related models.
 
         Steps:
-            1. Create a deletion log for the landlord profile.
-            2. Delete associated properties.
-            3. Delete company memberships if the profile is a company.
+            1. Log the deletion event for the landlord profile.
+            2. Cascade deletion for all associated properties.
+            3. Cascade deletion for company memberships if the profile is a company.
 
         Notes:
-            - All database operations are executed within an atomic transaction.
-            - Cascade logic is delegated to `log_model.landlord_profile`, which handles
-              related models consistently.
+            - All operations run within an atomic transaction.
+            - Actual cascade logic is handled via `log_model.landlord_profile`,
+              ensuring consistent deletion of related objects.
         """
         self.log_model.landlord_profile(self.target_model, self.reason)
 
@@ -99,13 +102,15 @@ class LandlordProfileCascadeDelete(BaseCascadeDelete, BookingCheckMixin):
         Execute the deletion workflow for the landlord profile.
 
         Steps:
-            1. Check for active bookings related to the profile's properties.
+            1. Check for active bookings associated with the profile's properties.
             2. Notify if deletion cannot proceed due to active bookings.
-            3. Perform deletion via `_delete`.
-            4. Send success notifications.
-            5. Log and handle any unexpected errors.
+            3. Perform cascade deletion via `_delete`.
+            4. Send success notifications upon completion.
+            5. Catch and log any unexpected errors.
 
-        Exceptions are caught and handled via `self.email_handler.handle_error`.
+        Exceptions:
+            Any exceptions raised during `_delete` or notifications are
+            handled via `self.email_handler.handle_error`.
         """
         try:
             has_active_bookings: List[Booking] = self._check_active_bookings()

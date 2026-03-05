@@ -32,11 +32,17 @@ class Property(models.Model):
                                      default=Decimal('0.00'), verbose_name=_('Taxes fees'))
     total_price = models.DecimalField(max_digits=10, blank=True, decimal_places=2,
                                       validators=[MinValueValidator(Decimal('10.00'))], verbose_name=_('Total price'))
+    discounted_price = models.DecimalField(max_digits=10, blank=True, decimal_places=2,
+                                           validators=[MinValueValidator(Decimal('10.00'))],
+                                           verbose_name=_('Discounted price'))
+    applied_discounts = models.ManyToManyField('Discount', blank=True, related_name='applied_properties',
+                                               verbose_name=_('Applied discouns'))
     payment_types = models.ManyToManyField('PaymentType', related_name='properties', verbose_name=_('Payment type'))
     min_stay = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_('Min stay'))
     max_guests = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)], verbose_name=_('Max guests'))
-    rating = models.PositiveSmallIntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)],
-                                              verbose_name=_('Rating'))
+    rating = models.DecimalField(max_digits=2, decimal_places=1, default=0,
+                                 validators=[MinValueValidator(Decimal('0.0')), MaxValueValidator(Decimal('5.0'))],
+                                 verbose_name=_('Rating'))
     review_count = models.PositiveIntegerField(default=0, validators=[MinValueValidator(8)],
                                                verbose_name=_('Review count'))
     cancellation_policy = models.ForeignKey('CancellationPolicy', on_delete=models.PROTECT, related_name='properties',
@@ -84,7 +90,10 @@ class Property(models.Model):
             self.slug = slug
 
         if not self.total_price:
-            self.total_price = (self.base_price + self.taxes_fees).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            total_price: Decimal = (self.base_price + self.taxes_fees).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+            self.total_price = total_price
+            self.discounted_price = total_price
 
         if self.approval_status == PropertyApprovalStatus.PENDING.value[0] and self.owner.is_trusted:
             self.approval_status = PropertyApprovalStatus.AUTO_APPROVED.value[0]

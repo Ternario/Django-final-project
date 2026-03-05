@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from properties.tasks.cascade_delete import property_soft_delete_task
+from properties.utils.pagination import PropertyPagination
+
 if TYPE_CHECKING:
     from properties.models import User, Currency, LandlordProfile, PropertySlugHistory
     from django.db.models import QuerySet
@@ -23,8 +28,6 @@ from properties.serializers.property import (
 
 )
 from properties.filters.query_params import PropertyFilter
-from properties.services.discount.calculator.discount import DiscountCalculator
-from properties.services.discount.calculator.list_discount import ListDiscountCalculator
 from properties.utils.check_permissions.property import CheckPropertyPermission
 from properties.utils.currency import user_currency_or_default
 
@@ -69,6 +72,7 @@ class PropertyPublicLAV(ListAPIView):
     permission_classes = [AllowAny]
     authentication_classes = []
     serializer_class = PropertyBaseSerializer
+    pagination_class = PropertyPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
     ordering_fields = ['price', 'created_at', 'rating']
@@ -78,7 +82,7 @@ class PropertyPublicLAV(ListAPIView):
         return Property.objects.active().select_related(
             'owner', 'detail', 'location'
         ).prefetch_related(
-            'property_images'
+            'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
@@ -86,10 +90,7 @@ class PropertyPublicLAV(ListAPIView):
 
         currency: Currency = user_currency_or_default(self.request)
 
-        calculator: ListDiscountCalculator = ListDiscountCalculator(queryset, currency)
-        calculated_queryset: QuerySet[Property] = calculator.calculate()
-
-        serializer = self.get_serializer(calculated_queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -109,6 +110,11 @@ class PropertyOwnerPublicLAV(ListAPIView):
     permission_classes = [AllowAny]
     authentication_classes = []
     serializer_class = PropertyBaseSerializer
+    pagination_class = PropertyPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = PropertyFilter
+    ordering_fields = ['price', 'created_at', 'rating']
+    ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Property]:
         if getattr(self, 'swagger_fake_view', False):
@@ -119,7 +125,7 @@ class PropertyOwnerPublicLAV(ListAPIView):
         return Property.objects.active(owner__hash_id=hash_id).select_related(
             'owner', 'detail', 'location'
         ).prefetch_related(
-            'property_images'
+            'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
@@ -127,10 +133,7 @@ class PropertyOwnerPublicLAV(ListAPIView):
 
         currency: Currency = user_currency_or_default(self.request)
 
-        calculator: ListDiscountCalculator = ListDiscountCalculator(queryset, currency)
-        calculated_queryset: QuerySet[Property] = calculator.calculate()
-
-        serializer = self.get_serializer(calculated_queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -139,13 +142,13 @@ class PropertyOwnerLAV(ListAPIView):
     """
     API view for listing properties of a specific landlord.
 
-    - GET: retrieve a list of properties using `PropertySerializer`.
+    - GET: retrieve a list of properties using `PropertyBaseSerializer`.
     - Only accessible to the landlord owner or company  members.
     - Supports filtering, searching, and ordering.
     - Prices are calculated in the user-selected or default currency.
     """
     permission_classes = [IsLandlord]
-    serializer_class = PropertySerializer
+    serializer_class = PropertyBaseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
     ordering_fields = ['price', 'created_at', 'rating']
@@ -163,7 +166,7 @@ class PropertyOwnerLAV(ListAPIView):
         return Property.objects.filter(owner__hash_id=hash_id).select_related(
             'owner', 'detail', 'location'
         ).prefetch_related(
-            'property_images'
+            'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
@@ -171,14 +174,20 @@ class PropertyOwnerLAV(ListAPIView):
 
         currency: Currency = user_currency_or_default(self.request)
 
-        calculator: ListDiscountCalculator = ListDiscountCalculator(queryset, currency)
-        calculated_queryset: QuerySet[Property] = calculator.calculate()
-
-        serializer = self.get_serializer(calculated_queryset, many=True)
+        serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name='p_lookup',
+            type=str,
+            location=OpenApiParameter.PATH,
+        )
+    ]
+)
 class PropertyPublicRAV(RetrieveAPIView):
     """
     API view for retrieving a single property by ID.
@@ -220,7 +229,6 @@ class PropertyPublicRAV(RetrieveAPIView):
         raise get_object_or_404(Property, pk=0)
 
     def retrieve(self, request, *args, **kwargs) -> Response:
-        user: User = self.request.user
         currency: Currency = user_currency_or_default(self.request)
 
         p_lookup = self.kwargs['p_lookup']
@@ -235,10 +243,7 @@ class PropertyPublicRAV(RetrieveAPIView):
                 'url': redirect_url
             }, status=status.HTTP_301_MOVED_PERMANENTLY)
 
-        calculator = DiscountCalculator(user, instance, currency)
-        instance.pricing = calculator.calculate()
-
-        serializer: PropertySerializer = self.get_serializer(instance)
+        serializer: PropertySerializer = self.get_serializer(instance, context={'currency': currency})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -284,15 +289,14 @@ class PropertyOwnerRUDV(RetrieveUpdateDestroyAPIView):
 
         instance: Property = self.get_object()
 
-        calculator = DiscountCalculator(None, instance, currency)
-        instance.pricing = calculator.calculate()
-
-        serializer: PropertySerializer = self.get_serializer(instance)
+        serializer: PropertySerializer = self.get_serializer(instance, context={'currency': currency})
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def destroy(self, request, *args, **kwargs) -> Response:
+        user: User = self.request.user
         instance: Property = self.get_object()
-        instance.soft_delete()
 
-        return Response({'detail': 'Property was deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        property_soft_delete_task.delay(instance.pk, user.pk)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

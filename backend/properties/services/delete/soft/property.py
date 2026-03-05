@@ -23,19 +23,23 @@ logger = logging.getLogger(__name__)
 
 class PropertyDelete(BaseCascadeDelete):
     """
-    Concrete implementation of `BaseCascadeDelete` for handling deletion of a Property model.
+    Concrete implementation of `BaseCascadeDelete` for handling soft deletion
+    of a single Property instance.
 
     Supports:
-        - Soft deletion of a single Property instance.
-        - Active booking checks before deletion.
+        - Soft deletion of the property.
+        - Checks for active bookings before deletion.
         - Logging deletion events using `CreateLogModel`.
-        - Permission checks for individual landlords and company landlords.
-        - Notifications on success, failure, or errors.
+        - Permission validation for individual landlords and company landlords.
+        - Notifications for success, failure, or unexpected errors.
 
     Attributes:
-        target_model (Property): The property being deleted.
+        target_model (Property): The property instance being deleted.
         deleted_by (User): User performing the deletion.
-        reason (str): Reason provided for deletion.
+        reason (str | None): Reason provided for deletion.
+        log_model (SoftLogModel): Logger instance for deletion events.
+        email_handler (SoftAdminResponse | SoftUserResponse): Handler for sending
+            email notifications depending on deletion context.
     """
 
     @staticmethod
@@ -43,11 +47,13 @@ class PropertyDelete(BaseCascadeDelete):
         """
         Retrieve the list of user IDs authorized as admins for a company landlord.
 
+        Includes the company owner and all users with `ADMIN` role.
+
         Args:
             company (LandlordProfile): Company landlord instance.
 
         Returns:
-            List[int]: List of user IDs including the company owner and all admins.
+            List[int]: User IDs authorized to manage the company property.
         """
         admins: List[int] = [company.created_by.pk]
 
@@ -64,8 +70,12 @@ class PropertyDelete(BaseCascadeDelete):
         """
         Factory method to create a PropertyDelete handler.
 
+        Determines the appropriate email handler and validates permissions
+        depending on whether the property belongs to an individual landlord
+        or a company landlord.
+
         Args:
-            target_model (Property): The property instance to delete.
+            target_model (Property): Property instance to delete.
             deleted_by (User): User performing the deletion.
             reason (str): Reason for deletion.
 
@@ -74,7 +84,7 @@ class PropertyDelete(BaseCascadeDelete):
 
         Raises:
             ValidationError: If the property is already deleted or reason is missing.
-            PermissionDenied: If the user lacks permissions to delete the property.
+            PermissionDenied: If the user lacks permission to delete the property.
         """
         if target_model.is_deleted:
             raise ValidationError({'detail': _('Property is already deleted.')})
@@ -96,30 +106,30 @@ class PropertyDelete(BaseCascadeDelete):
             if not reason:
                 raise ValidationError({'removed_reason': REMOVED_REASON})
 
-        return cls(target_model, deleted_by, reason, email_handler)
+        return cls(target_model=target_model, deleted_by=deleted_by, reason=reason, email_handler=email_handler)
 
     def _check_active_bookings(self) -> List[Booking]:
         """
-        Retrieve all active bookings for this property.
+        Retrieve all active bookings associated with this property.
 
         Returns:
-            List[Booking]: Active bookings referencing the target property.
+            List[Booking]: Active Booking instances referencing the property.
         """
         return list(Booking.objects.active(property_ref=self.target_model))
 
     @atomic_handel
     def _delete(self) -> None:
         """
-        Perform soft deletion of the property.
+        Perform the soft deletion of the property.
 
         Steps:
             1. Create a deletion log for the property.
             2. Soft-delete the property instance.
 
         Notes:
-            - All database operations are executed within an atomic transaction.
-            - Cascade logic is handled inside `log_model.single_model`,
-              which performs both logging and soft-deletion of the property.
+            - All operations are executed within an atomic transaction.
+            - Logging and soft deletion are handled via `log_model.single_model`,
+              which ensures consistent deletion and logging of the property.
         """
         self.log_model.single_model(self.target_model, self.reason)
 
@@ -128,13 +138,15 @@ class PropertyDelete(BaseCascadeDelete):
         Execute the deletion workflow for the property.
 
         Steps:
-            1. Check for active bookings.
+            1. Check for active bookings related to the property.
             2. Notify if deletion cannot proceed due to active bookings.
             3. Perform deletion via `_delete`.
-            4. Send success notifications.
-            5. Log and handle any unexpected errors.
+            4. Send success notifications upon completion.
+            5. Catch and log any unexpected errors.
 
-        Exceptions are caught and handled via `self.email_handler.handle_error`.
+        Exceptions:
+            Any exceptions raised during deletion or notifications are
+            handled via `self.email_handler.handle_error`.
         """
         try:
             has_active_bookings: List[Booking] = self._check_active_bookings()

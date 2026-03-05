@@ -14,5 +14,9 @@ BOOKING_ERRORS: Dict[str, str] = {
     'user_cancellation': _('You cannot cancel the booking less than two days in advance.'),
     'cancellation_reason': _(
         'This field is required when booking is being cancelled and must be at least 40 characters long.'
-    )
+    ),
+    'invalid_discounts': _('Invalid discount id provided.'),
+    'exclusive_discounts': _('You cannot apply several exclusive discount or exclusive with others.'),
+    'incompatible_types_discounts': _('The selected discount is not compatible with other discounts of the same type.'),
+    'incompatible_discounts': _('Your selected discounts is not stackable.')
 }

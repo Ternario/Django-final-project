@@ -1,18 +1,16 @@
 from __future__ import annotations
-
-
 from typing import Any, TYPE_CHECKING, Dict, List
 
 if TYPE_CHECKING:
-    from properties.models import Property, Discount, CancellationPolicy
+    from properties.models import Property, CancellationPolicy, Currency, DiscountUser
+    from django.db.models import QuerySet
     from datetime import date
-    from decimal import Decimal
 
+from decimal import Decimal
 from datetime import timedelta, date
-from decimal import Decimal, ROUND_HALF_UP
 from django.utils.timezone import now
 from rest_framework.serializers import (
-    ModelSerializer, CharField, DateTimeField, ValidationError, SerializerMethodField, ListField, IntegerField
+    ModelSerializer, CharField, DateTimeField, ValidationError, SerializerMethodField, ListField, IntegerField,
 )
 
 from properties.models import Booking, User
@@ -20,11 +18,15 @@ from properties.models import Booking, User
 from properties.serializers.currency import CurrencyBaseSerializer
 from properties.serializers.user import UserBasePublicSerializer
 from properties.serializers.discounts import AppliedDiscountSerializer
+
+from properties.services.discount.pre_booking_checker import PreBookingChecker
+
 from properties.utils.choices.booking import BookingStatus, CancellationPolicy as Policy
 from properties.utils.error_messages.booking import BOOKING_ERRORS
 from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
-from properties.utils.choices.discount import DiscountValueType
+from properties.utils.choices.discount import DiscountValueType, DiscountUserStatus
 from properties.utils.currency import format_price
+from properties.utils.decorators import atomic_handel
 
 
 class BookingCreateSerializer(ModelSerializer):
@@ -38,25 +40,38 @@ class BookingCreateSerializer(ModelSerializer):
     class Meta:
         model = Booking
         fields = ['id', 'guest', 'property_ref', 'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time',
-                  'base_price', 'taxes_fees', 'total_price', 'applied_discounts']
+                  'applied_discounts']
         read_only_fields = ['guest', 'property_ref']
 
+    @atomic_handel
     def create(self, validated_data: Dict[str, Any]) -> Booking:
         guest: User = self.context['guest']
         property_ref: Property = self.context['property_ref']
 
         validated_data['guest'] = guest
         validated_data['property_ref'] = property_ref
+        validated_data['total_price'] = property_ref.total_price
+
+        discounts: List[int] = validated_data.pop('discounts', [])
+
+        Property.objects.select_for_update().get(pk=property_ref.pk)
+
+        if discounts:
+            du_to_update: QuerySet[DiscountUser] = DiscountUser.objects.select_for_update().filter(
+                user_id=guest.pk, discount__in=discounts, status=DiscountUserStatus.ACTIVE.value[0]
+            )
+
+            du_to_update.update(
+                status=DiscountUserStatus.USED.value[0], used_at=now()
+            )
 
         return super().create(validated_data)
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         property_ref: Property = self.context['property_ref']
+        currency: Currency = self.context['currency']
         check_in_date: date = attrs.get('check_in_date')
         check_out_date: date = attrs.get('check_out_date')
-        base_price: Decimal = attrs.get('base_price')
-        taxes_fees: Decimal = attrs.get('taxes_fees')
-        total_price: Decimal = attrs.get('total_price')
         discounts: List[int] = attrs.get('applied_discounts', [])
 
         non_field_errors: List[str] = []
@@ -74,28 +89,12 @@ class BookingCreateSerializer(ModelSerializer):
         ).exists():
             non_field_errors.append(BOOKING_ERRORS['overlaps_dates'].format(property=property_ref.property_type))
 
-        sub_total_price: Decimal = (base_price + taxes_fees).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-        total_price: Decimal = total_price.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        if non_field_errors:
+            raise ValidationError({'non_field_errors': non_field_errors})
 
         if discounts:
-            discount_list: List[Discount] = Discount.objects.active(pk__in=discounts)
-            discounts_value: Decimal = Decimal('0.00')
-
-            for discount in discount_list:
-                if discount.value_type == DiscountValueType.PERCENTAGE.value[0]:
-                    discounts_value += sub_total_price * Decimal(discount.value) / Decimal('100')
-                else:
-                    discounts_value += Decimal(discount.value)
-
-            new_price: Decimal = (sub_total_price - discounts_value).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-
-            if total_price != new_price:
-                non_field_errors.append(BOOKING_ERRORS['wrong_total_price'])
-
-            if non_field_errors:
-                raise ValidationError({'non_field_errors': non_field_errors})
-
+            discount_list, discounted_price = PreBookingChecker(property_ref, discounts, currency).execute()
+            attrs['discounts'] = [d.pk for d in discount_list]
             attrs['applied_discounts'] = [
                 {
                     'id': discount.pk,
@@ -114,36 +113,47 @@ class BookingCreateSerializer(ModelSerializer):
                 }
                 for discount in discount_list
             ]
-
+            attrs['discounted_price'] = discounted_price
         else:
-            if total_price != sub_total_price:
-                non_field_errors.append(BOOKING_ERRORS['wrong_total_price'])
-
-        if non_field_errors:
-            raise ValidationError({'non_field_errors': non_field_errors})
+            attrs['discounted_price'] = property_ref.total_price
 
         return attrs
 
 
 class BookingBaseSerializer(ModelSerializer):
     property_name = CharField(source='property_ref.title', read_only=True)
-    check_in_time = CharField(source='get_check_in_time_display', read_only=True)
-    check_out_time = CharField(source='get_check_out_time_display', read_only=True)
+    booking_date = SerializerMethodField(read_only=True)
     status = CharField(source='get_status_display', read_only=True)
     payment_status = CharField(source='get_payment_status_display', read_only=True)
+    city = CharField(source='property_ref.location.city', read_only=True)
     currency = CurrencyBaseSerializer(read_only=True)
+    discounted_price = SerializerMethodField()
     cancelled_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
     created_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
-    total_price = SerializerMethodField()
 
     class Meta:
         model = Booking
-        fields = ['id', 'booking_number', 'property_ref', 'property_name', 'check_in_date', 'check_in_time',
-                  'check_out_date', 'check_out_time', 'status', 'total_price', 'currency', 'payment_status',
-                  'cancelled_at', 'created_at']
+        fields = ['id', 'booking_number', 'property_ref', 'property_name', 'booking_date', 'status', 'discounted_price',
+                  'currency', 'payment_status', 'city', 'cancelled_at', 'created_at']
 
-    def get_total_price(self, obj: Booking) -> Decimal:
-        return format_price(obj.total_price, obj.currency_rate_to_base)
+    def get_discounted_price(self, obj: Booking) -> Decimal:
+        return format_price(obj.discounted_price, obj.currency_rate_to_base)
+
+    def get_booking_date(self, obj: Booking) -> str:
+        check_in: date = obj.check_in_date
+        check_out: date = obj.check_out_date
+
+        if check_in.year == check_out.year and check_in.month == check_out.month:
+            month: str = check_in.strftime('%b')
+            return f'{check_in.day} - {check_out.day} {month} {check_in.year}'
+
+        if check_in.year == check_out.year:
+            return f'{check_in.day}.{check_in.month} - {check_out.day}.{check_out.month} {check_out.year}'
+
+        check_in_formatted: str = check_in.strftime('%d.%m.%Y')
+        check_out_formatted: str = check_out.strftime('%d.%m.%Y')
+
+        return f'{check_in_formatted} - {check_out_formatted}'
 
 
 class BookingGuestSerializer(ModelSerializer):
@@ -157,34 +167,30 @@ class BookingGuestSerializer(ModelSerializer):
     payment_status = CharField(source='get_payment_status_display', read_only=True)
     cancelled_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
     created_at = DateTimeField(format='%d-%m-%Y %H:%M', read_only=True)
-    total_price = SerializerMethodField()
+    discounted_price = SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = ['id', 'booking_number', 'property_ref', 'property_name', 'guests_number', 'additional_requests',
                   'check_in_date', 'check_in_time', 'check_out_date', 'check_out_time', 'status', 'currency',
-                  'total_price', 'payment_type', 'payment_method', 'payment_status', 'is_active', 'cancellation_reason',
-                  'cancelled_at', 'created_at']
+                  'discounted_price', 'payment_type', 'payment_method', 'payment_status', 'is_active',
+                  'cancellation_reason', 'cancelled_at', 'created_at']
 
-    def get_total_price(self, obj: Booking) -> Decimal:
-        return format_price(obj.total_price, obj.currency_rate_to_base)
+    def get_discounted_price(self, obj: Booking) -> Decimal:
+        return format_price(obj.discounted_price, obj.currency_rate_to_base)
 
 
 class BookingOwnerSerializer(BookingGuestSerializer):
     guest = UserBasePublicSerializer(read_only=True)
     discounts = AppliedDiscountSerializer(source='applied_discounts', many=True, read_only=True)
-    base_price = SerializerMethodField()
-    taxes_fees = SerializerMethodField()
+    total_price = SerializerMethodField()
 
     class Meta(BookingGuestSerializer.Meta):
         model = BookingGuestSerializer.Meta.model
-        fields = BookingGuestSerializer.Meta.fields + ['guest', 'base_price', 'taxes_fees', 'discounts']
+        fields = BookingGuestSerializer.Meta.fields + ['guest', 'total_price', 'discounts']
 
-    def get_base_price(self, obj: Booking) -> Decimal:
-        return format_price(obj.base_price, obj.currency_rate_to_base)
-
-    def get_taxes_fees(self, obj: Booking) -> Decimal:
-        return format_price(obj.taxes_fees, obj.currency_rate_to_base)
+    def get_total_price(self, obj: Booking) -> Decimal:
+        return format_price(obj.total_price, obj.currency_rate_to_base)
 
 
 class BookingCancellationSerializer(ModelSerializer):

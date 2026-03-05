@@ -37,7 +37,7 @@ class Booking(models.Model):
     guest_visible = models.BooleanField(default=True, verbose_name=_('Guest visible'))
     property_owner_visible = models.BooleanField(default=True, verbose_name=_('Property owner visible'))
 
-    check_in_date = models.DateField( verbose_name=_('Check in date'))
+    check_in_date = models.DateField(verbose_name=_('Check in date'))
     check_out_date = models.DateField(verbose_name=_('Check out date'))
     check_in_time = models.TimeField(choices=CheckInTime.choices(), default=CheckInTime.default(),
                                      blank=True, verbose_name=_('Check in Time'))
@@ -51,13 +51,11 @@ class Booking(models.Model):
                                  verbose_name=_('Currency'))
     currency_rate_to_base = models.DecimalField(max_digits=10, decimal_places=6,
                                                 verbose_name=_('Currency rate to base'))
-    base_price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('10.00'))],
-                                     verbose_name=_('Base price'))
-    taxes_fees = models.DecimalField(max_digits=8, decimal_places=2, default=0,
-                                     validators=[MinValueValidator(Decimal('0.00'))], verbose_name=_('Taxes fees'))
+    total_price = models.DecimalField(max_digits=10, blank=True, decimal_places=2, verbose_name=_('Total price'))
+    discounted_price = models.DecimalField(max_digits=10, blank=True, decimal_places=2,
+                                           validators=[MinValueValidator(Decimal('10.00'))],
+                                           verbose_name=_('Discounted price'))
     applied_discounts = models.JSONField(blank=True, null=True, verbose_name=_('Applied discounts'))
-    total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Total price'))
-
     payment_type = models.ForeignKey('PaymentType', on_delete=models.SET_NULL, null=True, related_name='bookings',
                                      verbose_name=_('Payment type'))
     payment_method = models.ForeignKey('PaymentMethod', on_delete=models.SET_NULL, null=True, related_name='bookings',
@@ -161,8 +159,10 @@ class Booking(models.Model):
         if self.status == BookingStatus.CANCELLED.value[0] or self.status == BookingStatus.COMPLETED.value[0]:
             self._snapshot_data()
             self.is_active = False
+
             if not self.cancelled_at:
                 self.cancelled_at = now()
+
         super().save(*args, **kwargs)
 
     def _snapshot_data(self) -> None:
@@ -170,23 +170,17 @@ class Booking(models.Model):
         ownership_profile: LandlordProfile = property_data.owner
         guest: User = self.guest
         property_location: Location = property_data.location
-        region: str | None = property_location.region
-
-        if region:
-            region = f'Region: {region}, '
-
-        property_address: str = (
-            f'Country: {property_location.country}, '
-            f'{region}'
-            f'City: {property_location.city}, '
-            f'Street address: {property_location.street} {property_location.house_number}'
-        )
 
         guest_full_name: str = f'{guest.first_name} {guest.last_name}'
 
         self.snapshot_data = {
             'property_title': property_data.title,
-            'property_address': property_address,
+            'property_country': property_location.country,
+            'property_region': property_location.region,
+            'property_city': property_location.city,
+            'property_post_code': property_location.post_code,
+            'property_street': property_location.street,
+            'property_house_number': property_location.house_number,
             'property_owner_name': ownership_profile.name,
             'property_owner_email': ownership_profile.email,
             'property_owner_type': ownership_profile.type,
@@ -202,8 +196,8 @@ class Booking(models.Model):
             'payment_method_name': self.payment_method.name,
             'payment_type_id': self.payment_type.pk,
             'payment_type_name': self.payment_type.name,
-            'cancellation_policy': self.cancellation_policy.pk if self.cancellation_policy else None,
-            'cancelled_by': self.cancelled_by.pk if self.cancelled_by else None,
+            'cancellation_policy': self.cancellation_policy_id,
+            'cancelled_by': self.cancelled_by_id if self.cancelled_by else None,
             'cancelled_by_token': None,
             'cancellation_reason': self.cancellation_reason if self.cancellation_reason else None
         }
@@ -212,7 +206,7 @@ class Booking(models.Model):
         if not self.guest:
             return
 
-        self.guest_token = make_user_token(self.guest.pk)
+        self.guest_token = make_user_token(self.guest_id)
 
         snapshot_data: Dict[str, Any] = self.snapshot_data if self.snapshot_data else {}
 

@@ -2,9 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List, Union
 
 if TYPE_CHECKING:
-    from properties.models import (
-        User, DeletionLog, LandlordProfile, Property, CompanyMembership, Review, Booking, Discount
-    )
+    from properties.models import LandlordProfile, Booking, Discount
 
 import re
 
@@ -12,6 +10,8 @@ from abc import ABC, abstractmethod
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, DatabaseError, models
+
+from properties.models import User, CompanyMembership, Review, Property, DeletionLog
 
 from properties.utils.constants.default_depersonalization_values import DELETED_USER_PLACEHOLDER
 from properties.utils.decorators import db_errors
@@ -169,7 +169,7 @@ class BaseLogModel(ABC):
             self.landlord_profile(company, parent_log=parent_log)
 
     @abstractmethod
-    def landlord_profile(self, model: LandlordProfile, reason: str,
+    def landlord_profile(self, model: LandlordProfile, reason: str | None = None,
                          parent_log: DeletionLog | None = None) -> None:
         pass
 
