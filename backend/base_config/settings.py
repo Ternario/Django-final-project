@@ -177,8 +177,6 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-HASH_SALT = env.str('HASH_SALT')
-
 EMAIL_BACKEND = env.str('EMAIL_BACKEND')
 
 # Base currency used for conversions in the database
