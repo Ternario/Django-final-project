@@ -113,7 +113,7 @@ class UserCascadeDelete(BaseCascadeDelete, CascadeActionsMixin):
             if len(self.landlord_profile) > 1:
                 self.log_model.landlord_profile_list(self.landlord_profile, parent_log)
             else:
-                self.log_model.landlord_profile(self.landlord_profile, parent_log)
+                self.log_model.landlord_profile(self.landlord_profile[0], parent_log)
 
         self.target_model.soft_delete()
 

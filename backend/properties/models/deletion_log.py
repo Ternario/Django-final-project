@@ -15,7 +15,8 @@ class DeletionLog(models.Model):
     Fields:
     - deleted_by: User who performed deletion.
     - deleted_model: ContentType of the deleted model.
-    - deleted_model_name: App label and name of the deleted model.
+    - project_name: App label
+    - deleted_model_name: Name of the deleted model.
     - deleted_object_id: ID of the deleted object.
     - deleted_object: GenericForeignKey pointing to the deleted object (if still accessible).
     - reason: Reason for delete (e.g., 'Cascade', user request, admin action).
@@ -25,10 +26,9 @@ class DeletionLog(models.Model):
     """
     deleted_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='deletions',
                                    verbose_name=_('Deleted by'))
-    deleted_by_token = models.CharField(max_length=64, blank=True, null=True, db_index=True,
-                                        verbose_name=_('Deleted by token'))
     deleted_model = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True,
                                       verbose_name=_('Deleted model'))
+    project_name = models.CharField(max_length=100, verbose_name=_('Project name'))
     deleted_model_name = models.CharField(max_length=100, verbose_name=_('Deleted model name'))
     deleted_object_id = models.PositiveIntegerField(validators=[MinValueValidator(1)],
                                                     verbose_name=_('Deleted model id'))
@@ -50,6 +50,5 @@ class DeletionLog(models.Model):
 
     def __str__(self):
         return (
-            f'Model: {self.deleted_model_name}, id: {self.deleted_object_id}, '
-            f'deleted by: {self.deleted_by if self.deleted_by else self.deleted_by_token}.'
+            f'Model: {self.deleted_model_name}, id: {self.deleted_object_id}, deleted by: {self.deleted_by}.'
         )

@@ -6,6 +6,7 @@ from django.db.models import QuerySet
 from more_itertools import chunked
 
 from properties.models import Discount, DiscountProperty, DiscountUser
+from properties.services.discount.applier import DiscountApplier
 from properties.services.discount.utils import DISCOUNTS_BATCH_SIZE
 from properties.utils.choices.discount import DiscountStatus, DiscountPropertyStatus, DiscountUserStatus
 from properties.utils.decorators import atomic_handel
@@ -28,7 +29,7 @@ class CheckDiscountStatus:
     """
 
     @atomic_handel
-    def check_expire(self, date_time: datetime) -> None:
+    def check_expire(self, date_time: datetime, is_test_data: bool = False) -> None:
         """
         Expire all active discounts, related DiscountProperty and related DiscountUser entries whose
         `valid_until` has passed.
@@ -42,17 +43,20 @@ class CheckDiscountStatus:
 
         Args:
             date_time (datetime): Reference datetime for activation.
+            is_test_data (bool): True to populate the database and perform the service function synchronously.
         """
         expired_discounts: QuerySet[Discount] = Discount.objects.filter(
             status=DiscountStatus.ACTIVE.value[0], valid_until__lte=date_time
         )
 
+        expired_discount_ids: List[int] = list(expired_discounts.values_list('id', flat=True))
+
         expired_dp: QuerySet[DiscountProperty] = DiscountProperty.objects.filter(
-            discount__in=expired_discounts, status=DiscountPropertyStatus.ACTIVE.value[0]
+            discount__in=expired_discount_ids, status=DiscountPropertyStatus.ACTIVE.value[0]
         )
 
         expired_du: QuerySet[DiscountUser] = DiscountUser.objects.filter(
-            discount__in=expired_discounts, status=DiscountUserStatus.ACTIVE.value[0]
+            discount__in=expired_discount_ids, status=DiscountUserStatus.ACTIVE.value[0]
         )
 
         expired_dp_ids: List[int] = list(expired_dp.values_list('id', flat=True))
@@ -64,10 +68,13 @@ class CheckDiscountStatus:
 
         if expired_dp_ids:
             for chunk in chunked(expired_dp_ids, DISCOUNTS_BATCH_SIZE):
-                transaction.on_commit(lambda ids=tuple(chunk): apply_discounts_task.delay(list(ids)))
+                if is_test_data:
+                    transaction.on_commit(lambda ids=tuple(chunk): DiscountApplier().execute(list(ids)))
+                else:
+                    transaction.on_commit(lambda ids=tuple(chunk): apply_discounts_task.delay(list(ids)))
 
     @atomic_handel
-    def check_activation(self, date_time: datetime) -> None:
+    def check_activation(self, date_time: datetime, is_test_data: bool = False) -> None:
         """
         Activate all scheduled discounts, related DiscountProperty and related DiscountUser entries whose
         `valid_from` has arrived.
@@ -80,17 +87,20 @@ class CheckDiscountStatus:
 
         Args:
             date_time (datetime): Reference datetime for activation.
+            is_test_data (bool): True to populate the database and perform the service function synchronously.
         """
         discount_to_activate: QuerySet[Discount] = Discount.objects.filter(
             status=DiscountStatus.SCHEDULED.value[0], valid_from__lte=date_time
         )
 
+        discount_to_activate_ids: List[int] = list(discount_to_activate.values_list('id', flat=True))
+
         dp_to_activate: QuerySet[DiscountProperty] = DiscountProperty.objects.filter(
-            discount__in=discount_to_activate, status=DiscountPropertyStatus.SCHEDULED.value[0]
+            discount__in=discount_to_activate_ids, status=DiscountPropertyStatus.SCHEDULED.value[0]
         )
 
         du_to_activate: QuerySet[DiscountUser] = DiscountUser.objects.filter(
-            discount__in=discount_to_activate, status=DiscountUserStatus.SCHEDULED.value[0]
+            discount__in=discount_to_activate_ids, status=DiscountUserStatus.SCHEDULED.value[0]
         )
 
         dp_to_activate_ids: List[int] = list(dp_to_activate.values_list('id', flat=True))
@@ -102,7 +112,10 @@ class CheckDiscountStatus:
 
         if dp_to_activate_ids:
             for chunk in chunked(dp_to_activate_ids, DISCOUNTS_BATCH_SIZE):
-                transaction.on_commit(lambda ids=tuple(chunk): apply_discounts_task.delay(list(ids)))
+                if is_test_data:
+                    transaction.on_commit(lambda ids=tuple(chunk): DiscountApplier().execute(list(ids)))
+                else:
+                    transaction.on_commit(lambda ids=tuple(chunk): apply_discounts_task.delay(list(ids)))
 
     @atomic_handel
     def check_user_expire(self, date_time: datetime):

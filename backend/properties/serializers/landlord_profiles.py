@@ -132,10 +132,6 @@ class LandlordProfileSerializer(LandlordProfilePublicSerializer):
         handle_m2m_field(instance, 'available_payment_methods', add_available_payment_methods,
                          remove_available_payment_methods)
 
-        # instance = LandlordProfile.objects.select_related('default_currency').prefetch_related(
-        #     'languages_spoken', 'accepted_currencies', 'available_payment_methods'
-        # ).get(pk=instance.pk)
-
         return instance
 
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:

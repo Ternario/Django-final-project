@@ -182,6 +182,9 @@ EMAIL_BACKEND = env.str('EMAIL_BACKEND')
 # Base currency used for conversions in the database
 BASE_CURRENCY = env.str('BASE_CURRENCY')
 
+# Base language
+BASE_LANGUAGE = env.str('BASE_LANGUAGE')
+
 # SMTP-server Settings
 EMAIL_HOST = env.str('EMAIL_HOST')
 EMAIL_PORT = env.str('EMAIL_PORT')
@@ -201,9 +204,6 @@ SUPPORT_EMAILS = {
 
 # Salt used to generate hash_id for landlord profiles
 HASH_SALT = env.str('HASH_SALT')
-
-# Token for generating a new token for the user for data depersonalization.
-USER_TOKEN_SECRET = env.str('USER_TOKEN_SECRET')
 
 # API key for access to geoapify.
 GEOAPIFY_API_KEY = env.str('GEOAPIFY_API_KEY')

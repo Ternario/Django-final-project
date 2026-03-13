@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
+from django.db import transaction
+
 if TYPE_CHECKING:
     from properties.models import User, LandlordProfile, DeletionLog, UserProfile
 
@@ -8,7 +10,7 @@ import logging
 
 from django.core.exceptions import ValidationError, PermissionDenied
 
-from properties.models import Booking, Review, Discount
+from properties.models import Booking, Review
 
 from properties.utils.choices.deletion import DeletionType
 from properties.utils.error_messages.permission import PERMISSION_ERRORS
@@ -34,8 +36,6 @@ class UserCascadeDepersonalization(CascadeActionsMixin):
         - Logging and depersonalization of related models created by the user:
             - Reviews authored by the user.
             - Bookings created by the user.
-            - Discounts created by the user.
-            - Bookings cancelled by the user.
         - Cascade handling of landlord-related data:
             - Company membership records if the user is a company member.
             - Landlord profiles (individual or company).
@@ -137,7 +137,7 @@ class UserCascadeDepersonalization(CascadeActionsMixin):
         reviews_list: List[Review] = list(Review.objects.filter(author_id=self.target_model.pk))
 
         property_ids: List[int] = [r.property_ref_id for r in reviews_list if r.status in [
-            ReviewStatus.PUBLISHED.value[0], ReviewStatus.SOFT_DELETED.value[0]
+            ReviewStatus.PUBLISHED.value[0], ReviewStatus.REJECTED.value[0], ReviewStatus.SOFT_DELETED.value[0]
         ]]
 
         if reviews_list:
@@ -156,30 +156,6 @@ class UserCascadeDepersonalization(CascadeActionsMixin):
 
         if bookings_list:
             self.log_model.list_handler(bookings_list, parent_log)
-
-    def _handle_cancelled_bookings(self) -> None:
-        """
-        Depersonalize all bookings cancelled by the user.
-
-        Calls `cancelled_by_privacy_delete()` on each affected booking
-        to anonymize cancellation-related data.
-        """
-        bookings_list: List[Booking] = list(Booking.objects.filter(cancelled_by_id=self.target_model.pk))
-
-        for booking in bookings_list:
-            booking.cancelled_by_privacy_delete()
-
-    def _handle_discount(self, parent_log: DeletionLog) -> None:
-        """
-        Log all discounts created by the user before depersonalization.
-
-        Args:
-            parent_log (DeletionLog): Parent deletion log entry to attach discount logs to.
-        """
-        discount_list: List[Discount] = list(Discount.objects.filter(created_by_id=self.target_model.pk))
-
-        if discount_list:
-            self.log_model.list_handler(discount_list, parent_log)
 
     @atomic_handel
     def _delete(self):
@@ -205,23 +181,18 @@ class UserCascadeDepersonalization(CascadeActionsMixin):
 
         property_ids: List[int] = self._handle_reviews(parent_log)
 
-        if any([self.is_landlord, self.target_model.is_admin, self.target_model.is_moderator]):
-            self._handle_cancelled_bookings()
-            self._handle_discount(parent_log)
+        if property_ids:
+            transaction.on_commit(lambda ids=tuple(property_ids): rating_updater_task.delay(ids))
 
-        if self.is_landlord and self.landlord_type == self._COMPANY_MEMBER:
-            self._handle_company_membership(parent_log)
+        self._handle_company_membership(parent_log)
 
-        elif self.is_landlord and self.landlord_profile:
+        if self.landlord_profile:
             if len(self.landlord_profile) > 1:
                 self.log_model.landlord_profile_list(self.landlord_profile, parent_log)
             else:
                 self.log_model.landlord_profile(self.landlord_profile[0], parent_log)
 
         self.target_model.privacy_delete()
-
-        if property_ids:
-            rating_updater_task.delay(property_ids)
 
     def execute(self) -> None:
         """

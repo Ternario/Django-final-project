@@ -1,5 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Union, Set
+
+from django.db import transaction
+
+from properties.tasks.service import update_user_company_member_to_regular_task
 
 if TYPE_CHECKING:
     from properties.models import DeletionLog, LandlordProfile
@@ -44,19 +48,31 @@ class PrivacyLogModel(BaseLogModel):
         """
         parent_log: DeletionLog = self._create_log_model(model, parent_log=parent_log)
 
-        properties: List[Property] = list(Property.objects.felter(owner_id=model.pk))
+        properties: List[Property] = list(Property.objects.filter(owner_id=model.pk))
 
         if model.type == LandlordType.INDIVIDUAL.value[0]:
-            booking_list: List[Booking] = Booking.objects.filter(prperty_ref__owner_id=self.landlord_profile[0].pk)
+            booking_list: List[Booking] = Booking.objects.filter(property_ref__owner_id=model.pk)
 
             if booking_list:
                 for booking in booking_list:
                     booking.property_owner_privacy_delete()
 
         membership: List[CompanyMembership] = list(CompanyMembership.objects.filter(company_id=model.pk))
+        membership_ids: List[int] = [cm.user_id for cm in membership]
+
+        users_with_other_companies: Set[int] = set(
+            CompanyMembership.objects.filter(
+                user_id__in=membership_ids, is_deleted=False
+            ).exclude(company_id=model.pk).values_list('user_id', flat=True)
+        )
 
         if membership:
             for member in membership:
+                m_id: int = member.user_id
+
+                if m_id not in users_with_other_companies:
+                    transaction.on_commit(lambda u_id=m_id: update_user_company_member_to_regular_task.delay(u_id))
+
                 self.single_model_soft(member, parent_log=parent_log)
 
         for prop in properties:

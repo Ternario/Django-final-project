@@ -20,7 +20,7 @@ logger = get_task_logger(__name__)
     retry_kwargs={'max_retries': 5},
     retry_backoff=True
 )
-def apply_discounts_task(dp_ids: List[int]) -> None:
+def apply_discounts_task(self, dp_ids: List[int]) -> None:
     DiscountApplier().execute(dp_ids)
 
 
@@ -30,7 +30,7 @@ def apply_discounts_task(dp_ids: List[int]) -> None:
     retry_kwargs={'max_retries': 3},
     retry_backoff=True
 )
-def rating_updater_task(prop_id: int | List[int]) -> None:
+def rating_updater_task(self, prop_id: int | List[int]) -> None:
     if isinstance(prop_id, list):
         PropertyRatingUpdater.execute_list(prop_id)
     else:
@@ -43,7 +43,7 @@ def rating_updater_task(prop_id: int | List[int]) -> None:
     retry_kwargs={'max_retries': 2},
     retry_backoff=True
 )
-def update_user_company_member_to_regular_task(u_id: int) -> None:
+def update_user_company_member_to_regular_task(self, u_id: int) -> None:
     try:
         user: User = User.objects.get(id=u_id)
         user.is_landlord = False

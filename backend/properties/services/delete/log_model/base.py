@@ -58,13 +58,14 @@ class BaseLogModel(ABC):
             deletion_log = DeletionLog(
                 deleted_by=self.deleted_by,
                 deleted_model=content_type,
-                deleted_model_name=f'{model._meta.app_label}.{model._meta.model_name}',
+                project_name=f'{model._meta.app_label}',
+                deleted_model_name=f'{model._meta.model_name}',
                 deleted_object_id=model.pk,
                 reason=reason,
                 deletion_type=self.deletion_type,
                 is_cascade=bool(parent_log),
                 parent_log=parent_log,
-                parent_log_name=parent_log._meta.model_name if parent_log else ''
+                parent_log_name=parent_log.deleted_model_name if parent_log else ''
             )
             deletion_log.save()
             return deletion_log

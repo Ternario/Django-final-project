@@ -53,6 +53,7 @@ class DiscountType(ChoicesEnumMixin, Enum):
       - COMPENSATION: Granted to specific users, e.g., as a refund or compensation.
     """
     SEASONAL = ('SEASONAL', 'Seasonal')
+    PROMO = ('PROMO', 'Promo')
     OWNER_PROMO = ('OWNER_PROMO', 'Owner promo')
     COUPON = ('COUPON', 'Coupon')
     REFERRAL = ('REFERRAL', 'Referral')

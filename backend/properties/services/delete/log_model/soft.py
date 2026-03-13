@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, List, Union, Set
+
+from django.db import transaction
 
 from properties.tasks.service import update_user_company_member_to_regular_task
 
@@ -43,15 +45,28 @@ class SoftLogModel(BaseLogModel):
 
         parent_log: DeletionLog = self._create_log_model(model, reason, parent_log=parent_log)
 
-        properties: List[Property] = list(Property.objects.not_deleted(owner_id=model.pk))
+        properties: List[Property] = Property.objects.not_deleted(owner_id=model.pk)
 
         if model.type == LandlordType.COMPANY.value[0]:
-            membership: List[CompanyMembership] = list(CompanyMembership.objects.filter(comapny_id=model.pk))
+            membership: List[CompanyMembership] = list(
+                CompanyMembership.objects.filter(company_id=model.pk, is_deleted=False)
+            )
+            membership_ids: List[int] = [cm.user_id for cm in membership]
+
+            users_with_other_companies: Set[int] = set(
+                CompanyMembership.objects.filter(
+                    user_id__in=membership_ids, is_deleted=False
+                ).exclude(company_id=model.pk).values_list('user_id', flat=True)
+            )
 
             if membership:
                 for member in membership:
+                    m_id: int = member.user_id
+
+                    if m_id not in users_with_other_companies:
+                        transaction.on_commit(lambda u_id=m_id: update_user_company_member_to_regular_task.delay(u_id))
+
                     self.single_model(member, parent_log=parent_log)
-                    update_user_company_member_to_regular_task.delay(member.user_id)
 
         for prop in properties:
             self.single_model(prop, parent_log=parent_log)

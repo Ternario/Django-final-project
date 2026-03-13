@@ -16,7 +16,6 @@ from properties.models import Booking
 from properties.utils.choices.review import ReviewStatus
 from properties.utils.constants.default_depersonalization_values import DELETED_USER_PLACEHOLDER
 from properties.utils.error_messages.review import REVIEW_ERRORS
-from properties.utils.user_token_generation import make_user_token
 from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
 
 
@@ -25,7 +24,6 @@ class Review(models.Model):
                                 verbose_name=_('Booking'))
     author = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='reviews',
                                verbose_name=_('Author'))
-    author_token = models.CharField(max_length=64, blank=True, null=True, db_index=True, verbose_name=_('Author token'))
     author_username = models.CharField(max_length=155, blank=True, verbose_name=_('Author username'))
     property_ref = models.ForeignKey('Property', on_delete=models.SET_NULL, blank=True, null=True, db_index=True,
                                      related_name='reviews', verbose_name=_('Property'))
@@ -137,17 +135,13 @@ class Review(models.Model):
         self.feedback = feedback if feedback else ''
         self.is_deleted = True
         self.deleted_at = now()
-        self.save(update_fields=['author_username', 'status', 'feedback', 'is_deleted', 'deleted_at'])
+        self.save(update_fields=['author_username', 'status', 'feedback', 'is_deleted', 'deleted_at', 'updated_at'])
 
     def privacy_delete(self, feedback: str | None = None) -> None:
-        if not self.author:
-            return
         self.author_username = DELETED_USER_PLACEHOLDER
-        self.author_token = make_user_token(self.author_id)
-        self.author = None
         self.status = ReviewStatus.PRIVACY_REMOVED.value[0]
         self.feedback = feedback if feedback else ''
         self.is_deleted = True
         self.save(
-            update_fields=['author_username', 'author_token', 'author', 'feedback', 'status', 'is_deleted']
+            update_fields=['author_username', 'feedback', 'status', 'is_deleted', 'updated_at']
         )

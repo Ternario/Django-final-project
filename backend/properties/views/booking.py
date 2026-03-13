@@ -1,11 +1,7 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING, List, Type, Dict
 
-from drf_spectacular.utils import extend_schema
-
-from properties.services.discount.user_applier import DiscountUserApplier
-from properties.utils.currency import user_currency_or_default
+from properties.utils.pagination import PropertyPagination
 
 if TYPE_CHECKING:
     from properties.models import User, Property, Currency
@@ -13,13 +9,14 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
 
 from rest_framework.views import APIView
-from rest_framework.generics import (
-    ListAPIView, RetrieveUpdateAPIView, get_object_or_404, CreateAPIView
-)
+from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView, get_object_or_404, CreateAPIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
+
 from django_filters.rest_framework import DjangoFilterBackend
+
+from drf_spectacular.utils import extend_schema
 
 from properties.permissions import IsOwnerBooking, IsLandlord
 from properties.models import Booking
@@ -27,10 +24,11 @@ from properties.serializers import (
     BookingCreateSerializer, BookingBaseSerializer, BookingGuestSerializer, BookingCancellationSerializer,
     BookingOwnerSerializer, PropertyBookingCreateSerializer
 )
-
 from properties.filters.query_params import BookingFilter
 from properties.utils.check_permissions.booking import CheckBookingPermission, CheckBookingCreatePermission
 from properties.utils.choices.time import CheckInTime, CheckOutTime
+from properties.utils.currency import user_currency_or_default
+from properties.services.discount.user_applier import DiscountUserApplier
 
 
 @extend_schema(
@@ -148,9 +146,12 @@ class BookingLAV(ListAPIView):
     selection for `property_ref` and `currency`.
     """
     permission_classes = [IsAuthenticated]
+    pagination_class = PropertyPagination
     serializer_class = BookingBaseSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = BookingFilter
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Booking]:
         user: User = self.request.user
@@ -199,6 +200,7 @@ class BookingPropertyOwnerLAV(ListAPIView):
     for `property_ref` and `currency`.
     """
     permission_classes = [IsLandlord]
+    pagination_class = PropertyPagination
     serializer_class = BookingBaseSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = BookingFilter

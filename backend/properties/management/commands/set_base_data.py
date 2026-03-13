@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 from typing import Dict, Any, List
 
 import json
@@ -8,9 +10,11 @@ from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
+from django.utils.timezone import now
 
 from base_config.settings import BASE_DIR
 from properties.models import Currency
+
 from properties.utils.currency import request_currency_rate
 from properties.utils.error_messages.currency import CURRENCY_ERRORS
 
@@ -21,10 +25,8 @@ class Command(BaseCommand):
 
     This management command performs two main tasks:
         1. Loads static data from JSON fixtures (e.g., amenities, locations) into the database.
-           - Displays success (✅) or error (❌) messages for each fixture.
         2. Updates currency exchange rates from a third-party API.
            - Reads base currency data from a JSON file.
-           - Logs warnings (⚠️) for missing or invalid rates.
            - Creates new Currency objects or updates existing ones with precise Decimal rates.
 
     Notes:
@@ -39,40 +41,21 @@ class Command(BaseCommand):
 
         Iterates over predefined fixture files (amenities.json, locations.json, etc.) and:
             - Loads each fixture using Django's loaddata command.
-            - Logs success (✅) or failure (❌) messages for each file.
+            - Logs success or failure  messages for each file.
         """
-        self.stdout.write('🔹 Loading base fixtures...')
-
-        fixtures_dri_path: str = os.path.join(BASE_DIR, 'properties', 'fixtures')
 
         fixture_files = [
-            f for f in os.listdir(fixtures_dri_path) if f.endswith('.json') and f != 'currencies.json'
+            'languages.json', 'users.json', 'landlord_profiles.json', 'amenities.json', 'cancellation_policies.json',
+            'locations.json', 'payment_methods.json', 'payment_types.json', 'properties.json', 'discounts.json',
+            'discount_properties.json'
         ]
-
-        if 'languages.json' in fixture_files:
-            try:
-                call_command('loaddata', 'languages.json', verbosity=0)
-                self.stdout.write(self.style.SUCCESS(f'✅ Loaded fixture: languages.json'))
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f'❌ Failed to load fixture languages.json: {e}'))
-
-            fixture_files.remove('languages.json')
-
-        if 'users.json' in fixture_files:
-            try:
-                call_command('loaddata', 'users.json', verbosity=0)
-                self.stdout.write(self.style.SUCCESS(f'✅ Loaded fixture: users.json'))
-            except Exception as e:
-                self.stdout.write(self.style.ERROR(f'❌ Failed to load fixture users.json: {e}'))
-
-            fixture_files.remove('users.json')
 
         for fixture_file in fixture_files:
             try:
                 call_command('loaddata', fixture_file, verbosity=0)
-                self.stdout.write(self.style.SUCCESS(f'✅ Loaded fixture: {fixture_file}'))
+                self.stdout.write(self.style.SUCCESS(f'Load fixture: {fixture_file}... OK'))
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'❌ Failed to load fixture {fixture_file}: {e}'))
+                self.stdout.write(self.style.ERROR(f'Failed to load fixture {fixture_file}: {e}'))
 
     def _update_currencies(self) -> None:
         """
@@ -81,10 +64,9 @@ class Command(BaseCommand):
         Steps:
             - Load default currency codes from a JSON fixture.
             - Request latest exchange rates from an external API.
-            - Log warnings (⚠️) for missing or invalid rates.
+            - Log warnings for missing or invalid rates.
             - Create or update Currency objects with precise Decimal rates.
         """
-        self.stdout.write('🔹 Updating currency rates from API...')
 
         results: Dict[str, Any] = request_currency_rate()
 
@@ -126,9 +108,10 @@ class Command(BaseCommand):
                 }
             )
 
-        self.stdout.write(self.style.SUCCESS('✅ Currency rates updated successfully'))
+        self.stdout.write(self.style.SUCCESS('Load and update: currencies.json... OK'))
 
     def handle(self, *args, **kwargs) -> None:
+        from properties.services.discount.status_checker import CheckDiscountStatus
         """
         Execute the full data import and currency update process.
 
@@ -137,8 +120,18 @@ class Command(BaseCommand):
             2. Update currency rates from the external API using `_update_currencies()`.
 
         Notes:
-            - Provides clear colored output for success (✅), warning (⚠️), and error (❌) messages.
+            - Provides clear output for success, warning, and error messages.
             - Designed to be run as a management command via manage.py.
         """
+
+        fixtures_build_path: str = os.path.join(BASE_DIR, 'properties', 'fixtures', 'generators', 'build.py')
+
+        subprocess.run([sys.executable, fixtures_build_path], check=True)
+
         self._update_currencies()
         self._load_fixtures()
+
+        CheckDiscountStatus().check_expire(now(), True)
+        CheckDiscountStatus().check_activation(now(), True)
+
+        self.stdout.write(self.style.SUCCESS(f'Update linked discounts and discount_properties... OK'))

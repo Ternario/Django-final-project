@@ -23,6 +23,9 @@ json_create_object.txt
 
 backend/table.json
 backend/test_data.txt
+backend/*.bak
+backend/*.dat
+backend/*.dir
 
 *.log
 *.pot

@@ -4,11 +4,38 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from properties.models import User, LandlordProfile, Property
+from properties.services.delete.privacy.user import UserCascadeDepersonalization
 from properties.services.delete.soft.landlord import LandlordProfileCascadeDelete
 from properties.services.delete.soft.property import PropertyDelete
 from properties.services.delete.soft.user import UserCascadeDelete
+from properties.utils.choices.user import UserDeleteStatus
 
 logger = get_task_logger(__name__)
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_kwargs={'max_retries': 3},
+    retry_backoff=True
+)
+def user_cascade_depersonalisation_task(self, user_id: int, deleted_by: int) -> None:
+    try:
+        user: User = User.objects.get(id=user_id, deleted_status__in=[
+            UserDeleteStatus.NONE.value[0], UserDeleteStatus.SOFT.value[0]
+        ])
+        deleted_by: User = User.objects.get(id=deleted_by, is_deleted=False)
+
+        reason: str = 'User requirement'
+
+        handler: UserCascadeDepersonalization = UserCascadeDepersonalization.create(
+            target_model=user, deleted_by=deleted_by, reason=reason
+        )
+        handler.execute()
+
+    except User.DoesNotExist:
+        logger.warning(f'User: {user_id} is already soft deleted or deletion initiator: {deleted_by} not found.')
+        return
 
 
 @shared_task(
@@ -22,7 +49,7 @@ def user_soft_cascade_delete_task(self, user_id: int, deleted_by: int | None = N
         user: User = User.objects.get(id=user_id, is_deleted=False)
         deleted_by: User = User.objects.get(id=deleted_by, is_deleted=False) if deleted_by else user
 
-        reason: str = 'Owner request'
+        reason: str = 'Owner request' if not deleted_by else 'Admin request'
 
         handler: UserCascadeDelete = UserCascadeDelete.create(target_model=user, deleted_by=deleted_by, reason=reason)
         handler.execute()
@@ -40,8 +67,8 @@ def user_soft_cascade_delete_task(self, user_id: int, deleted_by: int | None = N
 )
 def landlord_soft_cascade_delete_task(self, instance_id: int, deleted_by: int) -> None:
     try:
-        lp_instance: LandlordProfile = LandlordProfile.objects.get(id=instance_id)
-        user: User = User.objects.get(id=deleted_by)
+        lp_instance: LandlordProfile = LandlordProfile.objects.get(id=instance_id, is_deletd=False)
+        user: User = User.objects.get(id=deleted_by, is_deleted=False)
 
         reason: str = 'Owner request'
         handler: LandlordProfileCascadeDelete = LandlordProfileCascadeDelete.create(
@@ -65,8 +92,8 @@ def landlord_soft_cascade_delete_task(self, instance_id: int, deleted_by: int) -
 )
 def property_soft_delete_task(self, instance_id: int, deleted_by_id: int) -> None:
     try:
-        prop_instance: Property = Property.objects.get(id=instance_id)
-        user: User = User.objects.get(id=deleted_by_id)
+        prop_instance: Property = Property.objects.get(id=instance_id, is_deleted=False)
+        user: User = User.objects.get(id=deleted_by_id, is_deleted=False)
 
         reason: str = 'Owner request'
 

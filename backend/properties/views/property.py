@@ -1,14 +1,8 @@
 from __future__ import annotations
-
 from typing import TYPE_CHECKING
 
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-
-from properties.tasks.cascade_delete import property_soft_delete_task
-from properties.utils.pagination import PropertyPagination
-
 if TYPE_CHECKING:
-    from properties.models import User, Currency, LandlordProfile, PropertySlugHistory
+    from properties.models import User, Currency, LandlordProfile
     from django.db.models import QuerySet
 
 from rest_framework import status
@@ -21,7 +15,9 @@ from rest_framework.permissions import AllowAny, SAFE_METHODS
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from properties.models import Property
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+
+from properties.models import Property, PropertySlugHistory
 from properties.permissions import IsLandlord
 from properties.serializers.property import (
     PropertySerializer, PropertyOwnerSerializer, PropertyBaseSerializer, PropertyCreateSerializer
@@ -30,6 +26,8 @@ from properties.serializers.property import (
 from properties.filters.query_params import PropertyFilter
 from properties.utils.check_permissions.property import CheckPropertyPermission
 from properties.utils.currency import user_currency_or_default
+from properties.utils.pagination import PropertyPagination
+from properties.tasks.cascade_delete import property_soft_delete_task
 
 
 class PropertyCAV(CreateAPIView):
@@ -75,20 +73,26 @@ class PropertyPublicLAV(ListAPIView):
     pagination_class = PropertyPagination
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
-    ordering_fields = ['price', 'created_at', 'rating']
+    ordering_fields = ['discounted_price', 'created_at', 'rating']
     ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Property]:
         return Property.objects.active().select_related(
-            'owner', 'detail', 'location'
+            'owner', 'detail', 'location__city'
         ).prefetch_related(
             'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
-        queryset: QuerySet[Property] = self.get_queryset()
+        queryset: QuerySet[Property] = self.filter_queryset(self.get_queryset())
 
         currency: Currency = user_currency_or_default(self.request)
+
+        page: QuerySet[Property] = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, context={'currency': currency}, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
 
@@ -109,11 +113,11 @@ class PropertyOwnerPublicLAV(ListAPIView):
     """
     permission_classes = [AllowAny]
     authentication_classes = []
-    serializer_class = PropertyBaseSerializer
     pagination_class = PropertyPagination
+    serializer_class = PropertyBaseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
-    ordering_fields = ['price', 'created_at', 'rating']
+    ordering_fields = ['discounted_price', 'created_at', 'rating']
     ordering = ['-created_at']
 
     def get_queryset(self) -> QuerySet[Property]:
@@ -123,18 +127,23 @@ class PropertyOwnerPublicLAV(ListAPIView):
         hash_id: str = self.kwargs['hash_id']
 
         return Property.objects.active(owner__hash_id=hash_id).select_related(
-            'owner', 'detail', 'location'
+            'owner', 'detail', 'location__city'
         ).prefetch_related(
             'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
-        queryset: QuerySet[Property] = self.get_queryset()
+        queryset: QuerySet[Property] = self.filter_queryset(self.get_queryset())
 
         currency: Currency = user_currency_or_default(self.request)
 
-        serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
+        page: QuerySet[Property] = self.paginate_queryset(queryset)
 
+        if page is not None:
+            serializer = self.get_serializer(page, context={'currency': currency}, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -148,6 +157,7 @@ class PropertyOwnerLAV(ListAPIView):
     - Prices are calculated in the user-selected or default currency.
     """
     permission_classes = [IsLandlord]
+    pagination_class = PropertyPagination
     serializer_class = PropertyBaseSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = PropertyFilter
@@ -164,15 +174,21 @@ class PropertyOwnerLAV(ListAPIView):
         CheckPropertyPermission(user, hash_id).access_base()
 
         return Property.objects.filter(owner__hash_id=hash_id).select_related(
-            'owner', 'detail', 'location'
+            'owner', 'detail', 'location__city'
         ).prefetch_related(
             'property_images', 'applied_discounts'
         )
 
     def list(self, request, *args, **kwargs) -> Response:
-        queryset: QuerySet[Property] = self.get_queryset()
+        queryset: QuerySet[Property] = self.filter_queryset(self.get_queryset())
 
         currency: Currency = user_currency_or_default(self.request)
+
+        page: QuerySet[Property] = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, context={'currency': currency}, many=True)
+            return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, context={'currency': currency}, many=True)
 
@@ -214,7 +230,7 @@ class PropertyPublicRAV(RetrieveAPIView):
         if str(p_lookup).isdigit():
             return get_object_or_404(queryset, id=int(p_lookup))
 
-        prop_obj: Property = queryset.filter(slug=p_lookup).first()
+        prop_obj: Property = queryset.filter(slug__iexact=p_lookup).first()
 
         if prop_obj:
             return prop_obj
