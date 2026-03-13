@@ -29,3 +29,4 @@ class CompanyRole(ChoicesEnumMixin, Enum):
     ADMIN = ('ADMIN', 'Admin')
     MANAGER = ('MANAGER', 'Manager')
     ACCOUNTANT = ('ACCOUNTANT', 'Accountant')
+    DELETED = ('DELETED', 'Deleted')

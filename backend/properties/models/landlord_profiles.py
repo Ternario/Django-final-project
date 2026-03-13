@@ -20,14 +20,12 @@ from properties.utils.constants.default_depersonalization_values import DELETED_
 from properties.utils.currency import get_default_currency
 from properties.utils.error_messages.landlord_profile import LANDLORD_PROFILE_ERRORS
 from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
-from properties.utils.user_token_generation import make_user_token
 
 
 class LandlordProfile(models.Model):
     hash_id = models.CharField(max_length=64, unique=True, blank=True, verbose_name=_('Hash id'))
     created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='landlord_profiles',
                                    verbose_name=_('Created by'))
-    created_by_token = models.CharField(max_length=64, blank=True, db_index=True, verbose_name=_('Created by token'))
     name = models.CharField(max_length=255, unique=True, verbose_name=_('Name'))
     phone = models.CharField(max_length=21, unique=True, verbose_name=_('Phone'))
     email = models.EmailField(max_length=155, unique=True, verbose_name=_('Email'))
@@ -60,9 +58,7 @@ class LandlordProfile(models.Model):
     objects = CustomLandlordProfileManager()
 
     def __str__(self) -> str:
-        if self.created_by:
-            return f'{self.type}: {self.email}, by: {self.created_by}.'
-        return f'{self.type}: Anonymous: {self.created_by_token}.'
+        return f'{self.type}: {self.email}, by: {self.created_by}.'
 
     class Meta:
         verbose_name = _('Landlord Profile')
@@ -92,7 +88,7 @@ class LandlordProfile(models.Model):
 
         if (
                 self.created_by.landlord_type == LandlordType.INDIVIDUAL.value[0] and
-                LandlordProfile.objects.filter(created_by_id=self.created_by.pk).exists()
+                LandlordProfile.objects.filter(created_by_id=self.created_by_id).exists()
         ):
             non_field_errors.append(LANDLORD_PROFILE_ERRORS['multiple_individual'])
 
@@ -111,40 +107,44 @@ class LandlordProfile(models.Model):
 
         if not self.hash_id:
             salt: str = HASH_SALT
-            raw_string: str = f'{now()}-{salt}'
+            raw_string: str = f'{now()}-{salt}-{self.created_by_id}'
             self.hash_id = hashlib.sha256(raw_string.encode()).hexdigest()[:12]
+
+        if not self.default_currency_id:
+            self.default_currency = get_default_currency()
 
         super().save(*args, **kwargs)
 
     def soft_delete(self) -> None:
         if self.is_deleted:
             return
+
+        self.is_verified = False
         self.is_deleted = True
         self.deleted_at = now()
-        self.save(update_fields=['is_deleted', 'deleted_at', 'updated_at'])
+
+        self.save(update_fields=['is_verified', 'is_deleted', 'deleted_at', 'updated_at'])
 
     def privacy_delete(self) -> None:
-        if not self.created_by:
-            return
-
-        self.created_by_token = make_user_token(self.created_by.pk)
-        self.created_by = None
+        fields_to_update: List[str] = ['is_verified', 'is_deleted', 'deleted_at']
 
         if self.type == LandlordType.INDIVIDUAL.value[0]:
-            self.name = DELETED_LANDLORD_PLACEHOLDER
+            self.name = f'{DELETED_LANDLORD_PLACEHOLDER} {self.pk}'
             self.email = f'deleted_{self.pk}@example.com'
             self.phone = f'deleted_{self.pk}'
-            self.address = ''
+            self.registration_address = 'deleted_address'
             self.description = ''
-            self.languages_spoken.clear()
-            self.accepted_currencies.clear()
-            self.default_currency = None
-            self.available_payment_methods.clear()
+            self.languages_spoken.set([])
+            self.accepted_currencies.set([])
+            self.available_payment_methods.set([])
 
+            fields_to_update.extend(['name', 'email', 'phone', 'registration_address', 'description'])
+
+        self.is_verified = False
         self.is_deleted = True
         self.deleted_at = now()
 
-        self.save()
+        self.save(update_fields=fields_to_update)
 
 
 class CompanyMembership(models.Model):
@@ -152,8 +152,9 @@ class CompanyMembership(models.Model):
                                 verbose_name=_('Company'))
     user = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='user_memberships',
                              verbose_name=_('User'))
-    user_token = models.CharField(max_length=64, blank=True, db_index=True, verbose_name=_('User token'))
     user_full_name = models.CharField(max_length=155, verbose_name=_('User full name'))
+    phone = models.CharField(max_length=21, unique=True, verbose_name=_('Phone'))
+    email = models.EmailField(max_length=155, unique=True, verbose_name=_('Email'))
 
     role = models.CharField(max_length=15, choices=CompanyRole.choices(), default=CompanyRole.ACCOUNTANT.value[0],
                             verbose_name=_('Role'))
@@ -162,7 +163,7 @@ class CompanyMembership(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Joined at'))
 
     is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
-    left_at = models.DateTimeField(verbose_name=_('Joined at'))
+    left_at = models.DateTimeField(blank=True, null=True, verbose_name=_('Joined at'))
 
     is_deleted = models.BooleanField(default=False, verbose_name=_('Deleted'))
     deleted_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Deleted at'))
@@ -173,9 +174,7 @@ class CompanyMembership(models.Model):
     objects = CustomCompanyMembershipManager()
 
     def __str__(self) -> str:
-        if self.user:
-            return f'User: {self.user}, company: {self.company}.'
-        return f'Anonymous {self.user_token}, company: {self.company}.'
+        return f'User: {self.user}, company: {self.company}.'
 
     class Meta:
         verbose_name = _('Company Membership')
@@ -207,19 +206,24 @@ class CompanyMembership(models.Model):
     def soft_delete(self) -> None:
         if self.is_deleted:
             return
+
+        self.is_active = False
         self.is_deleted = True
         self.deleted_at = now()
         self.left_at = now()
-        self.save(update_fields=['is_deleted', 'deleted_at', 'left_at', 'updated_at'])
+        self.save(update_fields=['is_active', 'is_deleted', 'deleted_at', 'left_at', 'updated_at'])
 
     def privacy_delete(self) -> None:
-        if not self.user:
-            return
-        self.user_token = make_user_token(self.user.pk)
-        self.user = None
-        self.languages_spoken.clear()
+        self.email = f'deleted_member{self.pk}@example.com'
+        self.phone = f'deleted_{self.pk}'
+        self.role = CompanyRole.DELETED.value[0]
+        self.languages_spoken.set([])
+        self.is_active = False
         self.is_deleted = True
         self.deleted_at = now()
+
         if not self.left_at:
             self.left_at = now()
-        self.save(update_fields=['user_token', 'user', 'is_deleted', 'deleted_at', 'left_at', 'updated_at'])
+        self.save(
+            update_fields=['email', 'phone', 'role', 'is_active', 'is_deleted', 'deleted_at', 'left_at', 'updated_at']
+        )

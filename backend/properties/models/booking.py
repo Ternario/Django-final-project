@@ -14,7 +14,6 @@ from django.utils.translation import gettext_lazy as _
 from properties.utils.choices.landlord_profile import LandlordType
 from properties.utils.error_messages.booking import BOOKING_ERRORS
 from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
-from properties.utils.user_token_generation import make_user_token
 from properties.utils.choices.time import CheckInTime, CheckOutTime
 from properties.utils.choices.payment import PaymentStatus
 from properties.utils.choices.booking import BookingStatus
@@ -28,8 +27,6 @@ class Booking(models.Model):
 
     guest = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, db_index=True, related_name='bookings',
                               verbose_name=_('Guest'))
-
-    guest_token = models.CharField(max_length=64, blank=True, db_index=True, verbose_name=_('Guest token'))
     guests_number = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)],
                                                 verbose_name=_('Guests number'))
     additional_requests = models.TextField(blank=True, null=True, verbose_name=_('Additional requests'))
@@ -39,9 +36,9 @@ class Booking(models.Model):
 
     check_in_date = models.DateField(verbose_name=_('Check in date'))
     check_out_date = models.DateField(verbose_name=_('Check out date'))
-    check_in_time = models.TimeField(choices=CheckInTime.choices(), default=CheckInTime.default(),
+    check_in_time = models.TimeField(choices=CheckInTime.choices(), default=CheckInTime.default,
                                      blank=True, verbose_name=_('Check in Time'))
-    check_out_time = models.TimeField(choices=CheckOutTime.choices(), default=CheckOutTime.default(),
+    check_out_time = models.TimeField(choices=CheckOutTime.choices(), default=CheckOutTime.default,
                                       blank=True, verbose_name=_('Check out Time'))
 
     status = models.CharField(max_length=20, choices=BookingStatus.choices(), default=BookingStatus.PENDING.value[0],
@@ -70,8 +67,6 @@ class Booking(models.Model):
                                             related_name='bookings', verbose_name=_('Cancellation policy'))
     cancelled_by = models.ForeignKey('User', on_delete=models.SET_NULL, blank=True, null=True,
                                      related_name='cancelled_bookings', verbose_name=_('Cancelled by'))
-    cancelled_by_token = models.CharField(max_length=64, blank=True, db_index=True,
-                                          verbose_name=_('Cancelled by token'))
     cancellation_reason = models.TextField(blank=True, validators=[MinLengthValidator(30), MaxLengthValidator(2000)],
                                            verbose_name=_('Cancellation reason'))
     cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Cancelled at'))
@@ -185,7 +180,6 @@ class Booking(models.Model):
             'property_owner_email': ownership_profile.email,
             'property_owner_type': ownership_profile.type,
             'guest': guest.pk,
-            'guest_token': None,
             'guest_full_name': guest_full_name,
             'guest_email': guest.email,
             'guest_phone': guest.phone,
@@ -198,60 +192,27 @@ class Booking(models.Model):
             'payment_type_name': self.payment_type.name,
             'cancellation_policy': self.cancellation_policy_id,
             'cancelled_by': self.cancelled_by_id if self.cancelled_by else None,
-            'cancelled_by_token': None,
             'cancellation_reason': self.cancellation_reason if self.cancellation_reason else None
         }
 
     def privacy_delete(self) -> None:
-        if not self.guest:
-            return
-
-        self.guest_token = make_user_token(self.guest_id)
-
         snapshot_data: Dict[str, Any] = self.snapshot_data if self.snapshot_data else {}
 
-        snapshot_data['guest'] = None
-        snapshot_data['guest_token'] = self.guest_token
         snapshot_data['guest_full_name'] = None
         snapshot_data['guest_email'] = None
         snapshot_data['guest_phone'] = None
         snapshot_data['updated_at'] = now()
 
-        if self.cancelled_by and self.guest == self.cancelled_by:
-            self.cancelled_by_token = make_user_token(self.cancelled_by.pk)
-            self.cancelled_by = None
-
-            snapshot_data['cancelled_by'] = None
-            snapshot_data['cancelled_by_token'] = self.cancelled_by_token
-
         self.snapshot_data = snapshot_data
-        self.guest = None
 
-        self.save(
-            update_fields=['guest_token', 'guest', 'cancelled_by_token', 'cancelled_by', 'snapshot_data', 'updated_at']
-        )
-
-    def cancelled_by_privacy_delete(self) -> None:
-        if not self.cancelled_by:
-            return
-
-        snapshot_data: Dict[str, Any] = self.snapshot_data
-
-        self.cancelled_by_token = make_user_token(self.cancelled_by)
-
-        snapshot_data['cancelled_by_token'] = self.cancelled_by_token
-        snapshot_data['cancelled_by'] = None
-
-        self.snapshot_data = snapshot_data
-        self.cancelled_by = None
-
-        self.save(update_fields=['cancelled_by_token', 'cancelled_by', 'snapshot_data', 'updated_at'])
+        self.save(update_fields=['snapshot_data', 'updated_at'])
 
     def property_owner_privacy_delete(self) -> None:
         snapshot_data: Dict[str, Any] = self.snapshot_data
 
         snapshot_data['property_owner_name'] = None
         snapshot_data['property_owner_email'] = None
+        snapshot_data['updated_at'] = now()
 
         self.snapshot_data = snapshot_data
 

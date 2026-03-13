@@ -4,7 +4,7 @@ from properties.models import Property, Booking, Language, CompanyMembership, Am
 
 
 class PropertyFilter(FilterSet):
-    city = CharFilter(field_name='location__city')
+    city = CharFilter(field_name='location__city__name', lookup_expr='iexact')
     property_type = CharFilter(field_name='property_type', lookup_expr='iexact')
     price_gte = NumberFilter(field_name='discounted_price', lookup_expr='gte')
     price_lte = NumberFilter(field_name='discounted_price', lookup_expr='lte')
@@ -43,7 +43,7 @@ class PropertyFilter(FilterSet):
 class BookingFilter(FilterSet):
     property = NumberFilter(field_name='property_ref_id')
     status = CharFilter(field_name='status', lookup_expr='iexact')
-    city = CharFilter(field_name='property_ref__location__city', lookup_expr='iexact')
+    city = CharFilter(field_name='property_ref__location__city__name', lookup_expr='iexact')
 
     class Meta:
         model = Booking

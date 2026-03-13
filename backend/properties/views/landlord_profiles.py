@@ -271,9 +271,13 @@ class CompanyMembershipRUDAV(RetrieveUpdateDestroyAPIView):
         return get_object_or_404(queryset, id=member_id, company__hash_id=hash_id)
 
     def destroy(self, request, *args, **kwargs) -> Response:
+        hash_id: str = self.kwargs['hash_id']
         instance: CompanyMembership = self.get_object()
         instance.soft_delete()
 
-        update_user_company_member_to_regular_task.delay(instance.user_id)
+        if not CompanyMembership.objects.filter(
+                user_id=instance.user_id, is_deleted=False
+        ).exclude(company__hash_id=hash_id).exists():
+            update_user_company_member_to_regular_task.delay(instance.user_id)
 
         return Response(status=status.HTTP_204_NO_CONTENT)

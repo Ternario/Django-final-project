@@ -7,6 +7,12 @@ class PropertyPagination(PageNumberPagination):
     max_page_size = None
 
 
+class BookingPagination(PageNumberPagination):
+    page_size = 25
+    page_size_query_param = None
+    max_page_size = None
+
+
 class ReviewPagination(PageNumberPagination):
     page_size = 40
     page_size_query_param = None

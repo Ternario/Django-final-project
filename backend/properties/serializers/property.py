@@ -87,7 +87,7 @@ class PropertyCreateSerializer(ModelSerializer):
 
 
 class PropertyBaseFavoritesSerializer(ModelSerializer):
-    city = CharField(source='location.city', read_only=True)
+    city = CharField(source='location.city.name', read_only=True)
     property_type = CharField(source='get_property_type_display', read_only=True)
     total_price = SerializerMethodField(read_only=True)
     discounted_price = SerializerMethodField(read_only=True)
@@ -112,7 +112,7 @@ class PropertyBaseFavoritesSerializer(ModelSerializer):
 
 class PropertyBaseSerializer(ModelSerializer):
     owner = CharField(source='owner.name', read_only=True)
-    city = CharField(source='location.city', read_only=True)
+    city = CharField(source='location.city.name', read_only=True)
     property_type = CharField(source='get_property_type_display', read_only=True)
     property_area = CharField(source='details.property_area', read_only=True)
     floor = CharField(source='details.floor', read_only=True)

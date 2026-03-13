@@ -32,20 +32,19 @@ class CascadeActionsMixin:
         _handle_company_membership():
             Log company membership records linked to the user.
     """
+
     def _manage_if_landlord(self) -> List[LandlordProfile]:
         """
-        Determine and retrieve landlord profile(s) if the user is a landlord.
+        Retrieve landlord profile(s).
 
         Returns:
             List[LandlordProfile]:
-                - Landlord profile(s) created by the user if the user has a landlord
-                  role with type INDIVIDUAL or COMPANY.
+                - Landlord profile(s) created by the user.
                 - Empty list if the user is not a landlord or does not match
                   supported landlord types.
         """
-        if self.is_landlord and self.landlord_type in [self._INDIVIDUAL, self._COMPANY]:
-            return list(LandlordProfile.objects.filter(created_by=self.target_model.pk))
-        return []
+
+        return list(LandlordProfile.objects.filter(created_by_id=self.target_model.pk))
 
     def _check_active_bookings(self) -> List[Booking]:
         """

@@ -33,6 +33,7 @@ class DiscountApplier:
         - bulk discount recalculation tasks.
     """
     _SEASONAL: str = DiscountType.SEASONAL.value[0]
+    _PROMO: str = DiscountType.PROMO.value[0]
     _OWNER_PROMO: str = DiscountType.OWNER_PROMO.value[0]
 
     _STACKABLE: str = DiscountStackPolicy.STACKABLE.value[0]
@@ -73,7 +74,7 @@ class DiscountApplier:
         active_dp: List[DiscountProperty] = DiscountProperty.objects.filter(
             property_ref_id__in=property_ids,
             status=DiscountPropertyStatus.ACTIVE.value[0],
-            discount__type__in=[self._SEASONAL, self._OWNER_PROMO]
+            discount__type__in=[self._SEASONAL, self._PROMO, self._OWNER_PROMO]
         ).select_related('discount').prefetch_related('discount__incompatible_with')
 
         property_to_discounts: Dict[int, List[Discount]] = defaultdict(list)
@@ -161,7 +162,7 @@ class DiscountApplier:
 
         price: Decimal = total_price
 
-        min_allowed_price: Decimal = (total_price * (MIN_PRICE / 100)).quantize(
+        min_allowed_price: Decimal = (total_price * (MIN_PRICE / Decimal('100.00'))).quantize(
             Decimal('0.01'), rounding=ROUND_HALF_UP
         )
 
@@ -225,5 +226,5 @@ class DiscountApplier:
 
         Property.objects.bulk_update(prop_to_update, ['discounted_price'])
 
-        update_through_model.filter(property_id__in=[p.pk for p in prop_to_update]).delete()
-        update_through_model.bulk_create(m2m_discounts_to_update, ignore_conflicts=True)
+        update_through_model.objects.filter(property_id__in=[p.pk for p in prop_to_update]).delete()
+        update_through_model.objects.bulk_create(m2m_discounts_to_update, ignore_conflicts=True)

@@ -11,6 +11,7 @@ from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from properties.managers.user import CustomUserManager
 
 from properties.utils.choices.landlord_profile import LandlordType
+from properties.utils.choices.user import UserDeleteStatus
 from properties.utils.constants.age import AGE
 from properties.utils.currency import get_default_currency
 from properties.utils.language import get_default_language
@@ -40,6 +41,8 @@ class User(AbstractUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     is_deleted = models.BooleanField(default=False, verbose_name=_('Deleted'))
+    deleted_status = models.CharField(max_length=10, blank=True, choices=UserDeleteStatus.choices(),
+                                      default=UserDeleteStatus.NONE.value[0], verbose_name=_('Deleted status'))
     deleted_at = models.DateTimeField(blank=True, null=True, verbose_name=_('Deleted at'))
 
     date_joined = models.DateTimeField(blank=True, verbose_name=_('Date joined'))
@@ -104,16 +107,14 @@ class User(AbstractUser, PermissionsMixin):
         if self.is_deleted:
             return
 
+        self.is_verified = False
         self.is_active = False
         self.is_deleted = True
+        self.deleted_status = UserDeleteStatus.SOFT.value[0]
         self.deleted_at = now()
 
-        if self.is_landlord:
-            self.is_landlord = False
-
-        if self.landlord_type != LandlordType.NONE.value[0]:
-            self.landlord_type = LandlordType.NONE.value[0]
-        self.save(update_fields=['is_active', 'is_deleted', 'deleted_at', 'is_landlord', 'landlord_type', 'updated_at'])
+        self.save(
+            update_fields=['is_verified', 'is_active', 'is_deleted', 'deleted_status', 'deleted_at', 'updated_at'])
 
     def restore(self) -> None:
         if not self.is_deleted:
@@ -121,7 +122,8 @@ class User(AbstractUser, PermissionsMixin):
 
         self.is_active = True
         self.is_deleted = False
-        self.save(update_fields=['is_active', 'is_deleted', 'updated_at'])
+        self.deleted_status = UserDeleteStatus.NONE.value[0]
+        self.save(update_fields=['is_active', 'is_deleted', 'deleted_status', 'updated_at'])
 
     def privacy_delete(self) -> None:
         self.username = f'deleted_{self.pk}'
@@ -131,15 +133,16 @@ class User(AbstractUser, PermissionsMixin):
         self.date_of_birth = None
         self.language = None
         self.currency = None
-        self.password = ''
         self.is_staff = False
         self.is_superuser = False
         self.is_admin = False
         self.is_moderator = False
         self.is_landlord = False
+        self.landlord_type = LandlordType.NONE.value[0]
         self.is_verified = False
         self.is_active = False
         self.is_deleted = True
-        self.password = ''
+        self.deleted_status = UserDeleteStatus.PRIVACY.value[0]
+        self.set_unusable_password()
         self.deleted_at = now()
         self.save()

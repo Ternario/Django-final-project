@@ -20,14 +20,12 @@ from properties.utils.choices.discount import (
 )
 from properties.utils.currency import get_default_currency
 from properties.utils.error_messages.discounts import DISCOUNT_ERRORS, DISCOUNT_PROPERTY_ERRORS
-from properties.utils.user_token_generation import make_user_token
 from properties.utils.error_messages.not_null_field import NOT_NULL_FIELD
 
 
 class Discount(models.Model):
     created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='discounts',
                                    verbose_name=_('Discount'))
-    created_by_token = models.CharField(max_length=64, blank=True, verbose_name=_('Created by token'))
     is_admin_created = models.BooleanField(default=False, verbose_name=_('Is admin created'))
     landlord_profile = models.ForeignKey('LandlordProfile', on_delete=models.PROTECT, blank=True, null=True,
                                          related_name='discount_landlords', verbose_name=_('Landlord profile'))
@@ -76,7 +74,7 @@ class Discount(models.Model):
 
         non_field_errors: List[str] = []
 
-        if self.type == DiscountType.SEASONAL.value[0]:
+        if self.type in [DiscountType.SEASONAL.value[0], DiscountType.PROMO.value[0]]:
             if not self.valid_from or not self.valid_until:
                 non_field_errors.append(DISCOUNT_ERRORS['seasonal'])
         else:
@@ -112,7 +110,7 @@ class Discount(models.Model):
         if not self.priority:
             if self.type == DiscountType.COMPENSATION.value[0]:
                 self.priority = 100
-            elif self.type == DiscountType.SEASONAL.value[0]:
+            elif self.type in [DiscountType.SEASONAL.value[0], DiscountType.PROMO.value[0]]:
                 self.priority = 90
             elif self.type == DiscountType.OWNER_PROMO.value[0]:
                 self.priority = 70
@@ -122,7 +120,8 @@ class Discount(models.Model):
                 self.priority = 30
             elif self.type == DiscountType.COUPON.value[0]:
                 self.priority = 10
-            super().save(*args, **kwargs)
+
+        super().save(*args, **kwargs)
 
     def set_disabled(self) -> None:
         if self.status == DiscountStatus.DISABLED.value[0]:
@@ -137,16 +136,6 @@ class Discount(models.Model):
 
         self.status = DiscountStatus.ACTIVE.value[0]
         self.save(update_fields=['status', 'updated_at'])
-
-    def privacy_delete(self) -> None:
-        if not self.created_by:
-            return
-
-        self.created_by_token = make_user_token(self.created_by_id)
-        self.created_by = None
-        self.status = DiscountStatus.DISABLED.value[0]
-
-        self.save(update_fields=['created_by_token', 'created_by', 'status', 'updated_at'])
 
 
 class DiscountProperty(models.Model):
@@ -176,7 +165,7 @@ class DiscountProperty(models.Model):
         unique_together = ('discount', 'property_ref', 'landlord_profile')
 
     def __str__(self) -> str:
-        return f'Discount {self.discount_id} -> Property {self.property_ref_id}'
+        return f'Id: {self.pk}, Discount {self.discount_id} -> Property {self.property_ref_id}'
 
     def clean(self) -> None:
         super().clean()

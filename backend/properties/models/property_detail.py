@@ -60,9 +60,9 @@ class PropertyDetail(models.Model):
     garden_access = models.CharField(max_length=10, choices=DetailsAccess.choices(),
                                      default=DetailsAccess.PRIVATE.value[0], verbose_name=_('Garden access'))
 
-    check_in_from = models.TimeField(choices=CheckInTime.choices(), default=CheckInTime.default(),
+    check_in_from = models.TimeField(choices=CheckInTime.choices(), default=CheckInTime.default,
                                      verbose_name=_('Check in from'))
-    check_out_until = models.TimeField(choices=CheckOutTime.choices(), default=CheckOutTime.default(),
+    check_out_until = models.TimeField(choices=CheckOutTime.choices(), default=CheckOutTime.default,
                                        verbose_name=_('Check out until'))
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created at'))

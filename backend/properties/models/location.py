@@ -25,7 +25,7 @@ class Location(models.Model):
     def __str__(self) -> str:
         region: str = f'Region: {self.region},'
 
-        return f'Country: {self.country}, {region if self.region else None} City: {self.city}, id: {self.pk}.'
+        return f'Country: {self.country}, {region if self.region else ""} City: {self.city}, id: {self.pk}.'
 
     class Meta:
         verbose_name = _('Location')

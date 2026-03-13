@@ -1,4 +1,4 @@
-from base_config.settings import LANGUAGE_CODE
+from base_config.settings import BASE_LANGUAGE
 from properties.models import Language
 
 
@@ -15,5 +15,5 @@ def get_default_language() -> Language:
     Returns:
         Language: An instance of the Language model representing the default language.
     """
-    instance, _ = Language.objects.get_or_create(code=LANGUAGE_CODE, name='English (American)')
+    instance, _ = Language.objects.get_or_create(code=BASE_LANGUAGE, name='English (American)')
     return instance
