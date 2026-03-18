@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
-
 if TYPE_CHECKING:
     from properties.models import User
     from django.http import HttpResponse
@@ -53,18 +52,18 @@ def set_jwt_cookies(response: HttpResponse, user: User) -> HttpResponse:
     )
 
     response.set_cookie(
-        'refresh_token',
-        refresh_token_str,
+        key='refresh_token',
+        value=refresh_token_str,
         expires=refresh_token_exp,
         httponly=True,
-        samesite='lax'
+        samesite='Lax'
     )
     response.set_cookie(
-        'access_token',
-        access_token_str,
+        key='access_token',
+        value=access_token_str,
         expires=access_token_exp,
         httponly=True,
-        samesite='lax'
+        samesite='Lax'
     )
 
     return response

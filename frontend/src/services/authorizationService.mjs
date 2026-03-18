@@ -8,13 +8,13 @@ export default class AuthorizationService extends RequestsMethods {
     }
 
     async signIn(data) {
-        const url = "login/";
+        const url = "auth/login/";
 
         return await super.postResource(url, data);
     }
 
     async logOut(data) {
-        const url = "logout/";
+        const url = "auth/logout/";
 
         return await super.postResource(url, data);
     }

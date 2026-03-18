@@ -1,18 +1,15 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Dict, List
 
-from drf_spectacular.utils import extend_schema
-
-from properties.tasks.cascade_delete import user_soft_cascade_delete_task, user_cascade_depersonalisation_task
-from properties.utils.choices.landlord_profile import LandlordType
-
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
+from drf_spectacular.utils import extend_schema
+
 from django.utils.timezone import now
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateDestroyAPIView, CreateAPIView, get_object_or_404, DestroyAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS, IsAdminUser
+from rest_framework.generics import RetrieveUpdateDestroyAPIView, CreateAPIView, get_object_or_404
+from rest_framework.permissions import AllowAny, IsAuthenticated, SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -23,6 +20,8 @@ from properties.serializers import (
     UserLandlordActivateSerializer, UserLandlordDeactivateSerializer
 )
 from properties.managers.cookies import set_jwt_cookies
+from properties.tasks.cascade_delete import user_soft_cascade_delete_task
+from properties.utils.choices.landlord_profile import LandlordType
 
 
 class UserCAV(CreateAPIView):
@@ -166,6 +165,7 @@ class UserLoginView(APIView):
     - No authentication is required (`AllowAny`).
     """
     permission_classes = [AllowAny]
+    authentication_classes = []
     serializer_class = UserLoginSerializer
 
     def post(self, request, *args, **kwargs):

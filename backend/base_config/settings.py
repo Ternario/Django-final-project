@@ -63,7 +63,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'properties.middleware.jwt_authentication.JWTAuthenticationMiddleware',
-    # 'properties.middleware.user_preferences.UserPreferencesMiddleware',
     'corsheaders.middleware.CorsMiddleware',
 ]
 
@@ -211,7 +210,7 @@ GEOAPIFY_API_KEY = env.str('GEOAPIFY_API_KEY')
 # API key for access to Exchange Rate API
 EXCHANGERATE_API_KEY = env.str('EXCHANGERATE_API_KEY')
 
-SITE_URL = env('SITE_URL')
+SITE_URL = env.list('SITE_URL')
 
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS')
 CORS_ALLOW_CREDENTIALS = env.bool('CORS_ALLOW_CREDENTIALS')
