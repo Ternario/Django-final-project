@@ -23,19 +23,3 @@ RUN chmod +x /app/entrypoint.sh
 ENTRYPOINT [ "/app/entrypoint.sh" ]
 
 CMD [ "python", "manage.py", "runserver", "0.0.0.0:8000" ]
-
-# RUN apk add --no-cache \
-#     gcc \
-#     musl-dev \
-#     mariadb-connector-c-dev \
-#     libffi-dev \
-#     openssl-dev \
-#     python3-dev \
-#     build-base
-
-
-
-#  celery -A base_config worker -l info -P solo
-
-#  celery -A base_config beat -l info --scheduler celery.beat.PersistentScheduler
-# docker run -p 5000:80 -p 1025:25 rnwood/smtp4dev
