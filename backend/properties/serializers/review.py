@@ -20,7 +20,7 @@ class ReviewCreateSerializer(ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['author_token']
+        fields = '__all__'
         read_only_fields = ['id', 'author_username', 'property_ref', 'status', 'owner_response', 'moderator_notes',
                             'rejected_reason', 'is_deleted', 'deleted_at', 'created_at', 'updated_at']
 
@@ -94,7 +94,7 @@ class ReviewAuthorSerializer(ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['author_token']
+        fields = '__all__'
         read_only_fields = ['id', 'booking', 'author', 'author_username', 'property_ref', 'status', 'owner_response',
                             'moderator_notes', 'rejected_reason', 'is_deleted', 'deleted_at', 'created_at',
                             'updated_at']
@@ -124,7 +124,7 @@ class ReviewPropertyOwnerSerializer(ModelSerializer):
 
     class Meta:
         model = Review
-        exclude = ['author_token']
+        fields = '__all__'
         read_only_fields = ['id', 'booking', 'author', 'author_username', 'property_ref', 'rating',
                             'feedback', 'moderator_notes', 'rejected_reason', 'is_deleted', 'deleted_at', 'created_at',
                             'updated_at']

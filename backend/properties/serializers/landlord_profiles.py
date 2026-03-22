@@ -26,7 +26,7 @@ from properties.utils.regex_patterns import match_phone_number
 class LandlordProfileCreateSerializer(ModelSerializer):
     class Meta:
         model = LandlordProfile
-        exclude = ['type', 'created_by_token', 'is_trusted', 'is_verified', 'is_deleted', 'deleted_at', 'updated_at']
+        exclude = ['type', 'is_trusted', 'is_verified', 'is_deleted', 'deleted_at', 'updated_at']
         read_only_fields = ['created_by', 'hash_id']
 
     @atomic_handel
@@ -107,7 +107,7 @@ class LandlordProfileSerializer(LandlordProfilePublicSerializer):
 
     class Meta:
         model = LandlordProfile
-        exclude = ['created_by_token', 'is_trusted', 'is_deleted', 'deleted_at', 'updated_at']
+        exclude = ['is_trusted', 'is_deleted', 'deleted_at', 'updated_at']
         read_only_fields = ['hash_id', 'created_by', 'type']
 
     @atomic_handel
@@ -186,7 +186,7 @@ class CompanyMembershipCreateSerializer(ModelSerializer):
 
     class Meta:
         model = CompanyMembership
-        exclude = ['user_token', 'user_full_name', 'created_at', 'updated_at', 'is_deleted', 'deleted_at']
+        exclude = ['user_full_name', 'created_at', 'updated_at', 'is_deleted', 'deleted_at']
         read_only_fields = ['company']
 
     @atomic_handel
@@ -236,7 +236,7 @@ class CompanyMembershipSerializer(ModelSerializer):
 
     class Meta:
         model = CompanyMembership
-        exclude = ['user_token', 'user_full_name', 'is_deleted', 'deleted_at', 'created_at', 'updated_at']
+        exclude = ['user_full_name', 'is_deleted', 'deleted_at', 'created_at', 'updated_at']
         read_only_fields = ['company', 'joined_at']
 
     @atomic_handel

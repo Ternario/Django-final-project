@@ -1,0 +1,10 @@
+__pycache__
+.mypy_cache
+*.bak
+*.dat
+*.dir
+.idea
+.venv
+.dockerignore
+.vscode
+test_data.txt

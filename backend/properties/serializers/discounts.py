@@ -47,7 +47,7 @@ class DiscountCreateSerializer(ModelSerializer):
 
     class Meta:
         model = Discount
-        exclude = ['created_by_token', 'is_admin_created', 'created_at', 'updated_at']
+        exclude = ['is_admin_created', 'created_at', 'updated_at']
         read_only_fields = ['created_by', 'landlord_profile']
 
     def create(self, validated_data: Dict[str, Any]) -> Discount:
@@ -147,7 +147,7 @@ class DiscountSerializer(ModelSerializer):
 
     class Meta:
         model = Discount
-        exclude = ['created_by_token', 'is_admin_created', 'created_at', 'updated_at']
+        exclude = ['is_admin_created', 'created_at', 'updated_at']
         read_only_fields = ['created_by', 'name', 'type', 'value_type', 'currency', 'value', 'currency']
 
     @atomic_handel

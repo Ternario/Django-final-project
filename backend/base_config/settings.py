@@ -16,7 +16,13 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = Env()
-Env.read_env(str(os.path.join(BASE_DIR, '.env')))
+
+db_env = os.path.join(BASE_DIR, '..', '.env.database')
+
+backend_env = os.path.join(BASE_DIR, '..', '.env.backend')
+
+Env.read_env(str(db_env))
+Env.read_env(str(backend_env))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -25,7 +31,7 @@ Env.read_env(str(os.path.join(BASE_DIR, '.env')))
 SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
 
@@ -89,24 +95,17 @@ WSGI_APPLICATION = 'base_config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-if env.bool('MYSQL', default=False):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': env('DB_NAME'),
-            'USER': env('DB_USER'),
-            'PASSWORD': env('DB_PASSWORD'),
-            'HOST': env('DB_HOST'),
-            'PORT': env('DB_PORT'),
-        },
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': f'{BASE_DIR}/db.sqlite3',
-        },
-    }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('MYSQL_DATABASE'),
+        'USER': env('MYSQL_USER'),
+        'PASSWORD': env('MYSQL_PASSWORD'),
+        'HOST': env('DB_HOST'),
+        'PORT': env('DB_PORT'),
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -222,6 +221,7 @@ SPECTACULAR_SETTINGS = {
     # 'SECURITY': [{'bearerAuth': []}],
 }
 
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = env.str('CELERY_RESULT_BACKEND')
 CELERY_ACCEPT_CONTENT = ['json']
