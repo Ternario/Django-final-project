@@ -91,10 +91,11 @@ class Command(BaseCommand):
                 timezone='UTC',
             )
 
-            PeriodicTask.objects.get_or_create(
+            PeriodicTask.objects.update_or_create(
                 name=f'{task}-every-{minute}-minutes-offset-{minute_offset}',
                 task=task,
-                crontab=schedule
+                crontab=schedule,
+                enabled=True
             )
 
         self.stdout.write(self.style.SUCCESS(f'Create Celery tasks... OK'))
