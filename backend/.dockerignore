@@ -8,4 +8,3 @@ __pycache__
 .dockerignore
 .vscode
 test_data.txt
-node_modules

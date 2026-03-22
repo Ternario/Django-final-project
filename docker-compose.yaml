@@ -37,7 +37,6 @@ services:
     image: redis
     ports:
       - '6379:6379'
-  
   beat:
     build: ./backend
     command: celery -A base_config beat --loglevel=info
