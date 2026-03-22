@@ -1,0 +1,72 @@
+services:
+  frontend:
+    build: ./frontend
+    restart: always
+    ports:
+      - '3000:3000'
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+    env_file:
+      - .env.frontend
+  backend:
+    build: ./backend
+    restart: always
+    ports:
+      - '8000:8000'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env.database
+      - .env.backend
+  mysql:
+    image: mysql
+    restart: always
+    env_file:
+      - .env.database
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 10
+    volumes:
+      - mysql_data:/var/lib/mysql
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+  
+  beat:
+    build: ./backend
+    command: celery -A base_config beat --loglevel=info
+    env_file:
+      - .env.database
+      - .env.backend
+    depends_on:
+      - backend 
+      - redis
+    entrypoint: ""
+  worker:
+    build: ./backend
+    command: celery -A base_config worker --loglevel=info
+    env_file:
+      - .env.database
+      - .env.backend
+    depends_on:
+      - backend 
+      - redis
+    entrypoint: ""
+  smtp4dev:
+    image: rnwood/smtp4dev
+    ports:
+      - '1025:25'
+      - '5000:80'
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+     - '8888:8080'
+volumes:
+  mysql_data:

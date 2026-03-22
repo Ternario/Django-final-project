@@ -13,7 +13,7 @@ class UserProfileSerializer(ModelSerializer):
 
     class Meta:
         model = UserProfile
-        exclude = ['user_token', 'created_at', 'updated_at', 'favorites']
+        exclude = ['created_at', 'updated_at', 'favorites']
         read_only_fields = ['user']
 
     def validate_phone(self, phone: str | None) -> str:

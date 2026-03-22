@@ -20,12 +20,15 @@ yarn-error.log*
 
 json_create_object.txt
 *.env
+*.env.*
+
 
 backend/table.json
 backend/test_data.txt
 backend/*.bak
 backend/*.dat
 backend/*.dir
+backend/.mypy_cache/
 
 *.log
 *.pot
