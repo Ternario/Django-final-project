@@ -67,7 +67,9 @@ for k, v in user_profiles_data.items():
 
 total_user_count: int = users_in_data_map_count
 
-for i in range(users_in_data_map_count + 1, users_in_data_map_count + 6):
+count_of_simple_users: int = 6
+
+for i in range(users_in_data_map_count + 1, users_in_data_map_count + count_of_simple_users):
     email: str = f'user{i - users_in_data_map_count}@example.com'
     first_name: str = 'Simple'
     last_name: str = f'User{i - users_in_data_map_count}'
