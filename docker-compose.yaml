@@ -7,8 +7,6 @@ services:
     volumes:
       - /app/node_modules
       - ./frontend:/app
-    env_file:
-      - .env.frontend
   backend:
     build: ./backend
     restart: always
@@ -39,23 +37,23 @@ services:
       - '6379:6379'
   beat:
     build: ./backend
+    restart: always
     command: celery -A base_config beat --loglevel=info
     env_file:
       - .env.database
       - .env.backend
     depends_on:
       - backend 
-      - redis
     entrypoint: ""
   worker:
     build: ./backend
+    restart: always
     command: celery -A base_config worker --loglevel=info
     env_file:
       - .env.database
       - .env.backend
     depends_on:
       - backend 
-      - redis
     entrypoint: ""
   smtp4dev:
     image: rnwood/smtp4dev
