@@ -48,7 +48,7 @@ A frontend interface based on React is planned for future development to provide
 1. Make a local copy of the repository. In the console, select the directory where the project repository will be cloned and Run the command:
 
 ```bash
-git clone git@github.com:Ternario/Django-final-project.git
+git clone git@github.com:Ternario/stay-manager.git
 ```
 1. 2 Switch to project's root directory
 
