@@ -50,7 +50,7 @@ A frontend interface based on React is planned for future development to provide
 ```bash
 git clone git@github.com:Ternario/Django-final-project.git
 ```
-1. 2 Switch to root directory
+1. 2 Switch to project's root directory
 
 ```bash
 cd stay-manager
