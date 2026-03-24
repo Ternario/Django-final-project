@@ -11,7 +11,6 @@
 
 ## 📝 Project Overview
 
-<p align="content">
 Backend application for managing real estate reservations. It allows users to create and manage personal and property owner profiles, add rental properties, search and filter available offers, leave reviews, and handle bookings.
 
 The application is built with Django REST Framework and provides a REST API for interacting with the system. It includes features such as discounts, support for multiple currencies, and location-based filtering.
@@ -26,7 +25,6 @@ Celery with Redis is used for background task processing. This includes:
 The project also includes handling of user data, such as deletion and anonymization when needed.
 
 A frontend interface based on React is planned for future development to provide a more convenient user experience.
-</p>
 
 ## 🛠 Tech Stack
 
@@ -51,6 +49,11 @@ A frontend interface based on React is planned for future development to provide
 
 ```bash
 git clone git@github.com:Ternario/Django-final-project.git
+```
+1. 2 Switch to root directory
+
+```bash
+cd stay-manager
 ```
 
 2. Create `.env.database` and `.env.backend` files in the root directory and fill in the following variables:
@@ -120,7 +123,7 @@ Make docker images and run containers.
 docker-compose up -d --build          
 ```
 
-## Output:
+**_Output:_**
 ![Successful output](screenshots/dc-run.png)
 
 **Notes:**
@@ -136,7 +139,7 @@ The following command will create and load the **base data** into the database, 
 python manage.py set_base_data
 ```
 
-## Output:
+**_Output:_**
 ![Successful output](screenshots/successfully_added.png)
 
 
