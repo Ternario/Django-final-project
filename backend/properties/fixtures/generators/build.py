@@ -29,7 +29,7 @@ from data_templates.payment_types import payment_type_data
 from payment_types import payment_types
 from discount_property import discount_properties
 
-from utils import user_type, set_personal_data
+from utils import user_type, set_personal_data, SUCCESS_LOG_INFO
 from users import users
 from landlord_profiles import profiles, members
 from property import properties
@@ -50,7 +50,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-u_p_d: Dict[str, List[Dict[str, str] | List[Dict[str, Any]]]] = deepcopy(user_profiles_data)
+user_profile_raw_data: Dict[str, List[Dict[str, Any]]]= deepcopy(user_profiles_data)
 
 users_in_data_map_count: int = 0
 
@@ -74,16 +74,16 @@ for i in range(users_in_data_map_count + 1, users_in_data_map_count + count_of_s
     first_name: str = 'Simple'
     last_name: str = f'User{i - users_in_data_map_count}'
     landlord_type: str = 'NONE'
-    u_p_d['simple_users'].append({
+    user_profile_raw_data['simple_users'].append({
         'email': email, 'first_name': first_name, 'last_name': last_name, 'landlord_type': landlord_type
     })
     total_user_count += 1
 
-superusers: List[Dict[str, str]] = u_p_d['superusers']
-admins: List[Dict[str, str]] = u_p_d['admins']
-individuals: List[Dict[str, str]] = u_p_d['individuals']
-companies: List[Dict[str, Any]] = u_p_d['companies']
-simple_users: List[Dict[str, Any]] = u_p_d['simple_users']
+superusers: List[Dict[str, str]] = user_profile_raw_data['superusers']
+admins: List[Dict[str, str]] = user_profile_raw_data['admins']
+individuals: List[Dict[str, str]] = user_profile_raw_data['individuals']
+companies: List[Dict[str, Any]] = user_profile_raw_data['companies']
+simple_users: List[Dict[str, Any]] = user_profile_raw_data['simple_users']
 
 u_type: dict[int, str] = user_type.copy()
 
@@ -169,7 +169,7 @@ def build_fixtures():
         current_amenity_category_index += 1
         current_amenity_index += a_index
 
-    logger.info('Compile amenities... OK')
+    logger.info(f'Compile amenities{SUCCESS_LOG_INFO}')
 
     for cp in cancellation_policy_raw_data:
         cancellation_policy_fixtures.append(
@@ -178,7 +178,7 @@ def build_fixtures():
 
         current_cancellation_policy_index += 1
 
-    logger.info('Compile cancellation policies... OK')
+    logger.info(f'Compile cancellation policies{SUCCESS_LOG_INFO}')
 
     for currency in currency_raw_data:
         currency_fixtures.append({
@@ -187,7 +187,7 @@ def build_fixtures():
             'symbol': currency['symbol']
         })
 
-    logger.info('Compile currencies... OK')
+    logger.info(f'Compile currencies{SUCCESS_LOG_INFO}')
 
     for loc in locations_raw_data:
         current_city_index, country_cities_map, location_list = locations(
@@ -206,25 +206,25 @@ def build_fixtures():
         current_country_index += 1
         current_city_index += current_city_index
 
-    logger.info('Compile locations... OK')
+    logger.info(f'Compile locations{SUCCESS_LOG_INFO}')
 
     for language in languages_raw_data:
         language_fixtures.append(languages(current_language_index, language, date))
         current_language_index += 1
 
-    logger.info('Compile languages... OK')
+    logger.info(f'Compile languages{SUCCESS_LOG_INFO}')
 
     for p_method in payment_method_raw_data:
         payment_method_fixtures.append(payment_methods(current_payment_method_index, p_method, date))
         current_payment_method_index += 1
 
-    logger.info('Compile payment_methods... OK')
+    logger.info(f'Compile payment_methods{SUCCESS_LOG_INFO}')
 
     for p_type in payment_type_raw_data:
         payment_type_fixtures.append(payment_types(current_payment_type_index, p_type, date))
         current_payment_type_index += 1
 
-    logger.info('Compile payment_types... OK')
+    logger.info(f'Compile payment_types{SUCCESS_LOG_INFO}')
 
     for superuser in superusers:
         has_discounts: bool = superuser.get('has_discounts', False)
@@ -244,7 +244,7 @@ def build_fixtures():
 
         current_user_index += 1
 
-    logger.info('Compile superusers... OK')
+    logger.info(f'Compile superusers{SUCCESS_LOG_INFO}')
 
     for admin in admins:
         has_discounts: bool = admin.get('has_discounts', False)
@@ -264,7 +264,7 @@ def build_fixtures():
 
         current_user_index += 1
 
-    logger.info('Compile admins... OK')
+    logger.info(f'Compile admins{SUCCESS_LOG_INFO}')
 
     for individual in individuals:
         has_discounts: bool = individual.pop('owner_discounts', False)
@@ -345,7 +345,7 @@ def build_fixtures():
         current_user_index += 1
         current_landlord_profile_index += 1
 
-    logger.info('Compile individual_landlords... OK')
+    logger.info(f'Compile individual_landlords{SUCCESS_LOG_INFO}')
 
     for company in companies:
         user_model: Dict[str, str] = company['user_model']
@@ -461,7 +461,7 @@ def build_fixtures():
 
             current_landlord_profile_index += 1
 
-    logger.info('Compile company_landlords... OK')
+    logger.info(f'Compile company_landlords{SUCCESS_LOG_INFO}')
 
     for user in simple_users:
         user_t: str = u_type[3]
@@ -474,62 +474,62 @@ def build_fixtures():
     with open('properties/fixtures/amenities.json', 'w') as f:
         json.dump(amenity_fixtures, f, indent=2)
 
-    logger.info('Create fixture: amenities.json... OK')
+    logger.info(f'Create fixture: amenities.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/cancellation_policies.json', 'w') as f:
         json.dump(cancellation_policy_fixtures, f, indent=2)
 
-    logger.info('Create fixture: cancellation_policies.json... OK')
+    logger.info(f'Create fixture: cancellation_policies.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/locations.json', 'w') as f:
         json.dump(location_fixtures, f, indent=2)
 
-    logger.info('Create fixture: locations.json... OK')
+    logger.info(f'Create fixture: locations.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/currencies.json', 'w') as f:
         json.dump(currency_fixtures, f, indent=2)
 
-    logger.info('Create fixture: currencies.json... OK')
+    logger.info(f'Create fixture: currencies.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/languages.json', 'w') as f:
         json.dump(language_fixtures, f, indent=2)
 
-    logger.info('Create fixture: languages.json... OK')
+    logger.info(f'Create fixture: languages.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/payment_methods.json', 'w') as f:
         json.dump(payment_method_fixtures, f, indent=2)
 
-    logger.info('Create fixture: payment_methods.json... OK')
+    logger.info(f'Create fixture: payment_methods.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/payment_types.json', 'w') as f:
         json.dump(payment_type_fixtures, f, indent=2)
 
-    logger.info('Create fixture: payment_types.json... OK')
+    logger.info(f'Create fixture: payment_types.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/users.json', 'w') as f:
         json.dump(user_fixtures, f, indent=2)
 
-    logger.info('Create fixture: users.json... OK')
+    logger.info(f'Create fixture: users.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/landlord_profiles.json', 'w') as f:
         json.dump(landlord_profile_fixtures, f, indent=2)
 
-    logger.info('Create fixture: landlord_profiles.json... OK')
+    logger.info(f'Create fixture: landlord_profiles.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/properties.json', 'w') as f:
         json.dump(property_fixtures, f, indent=2)
 
-    logger.info('Create fixture: properties.json... OK')
+    logger.info(f'Create fixture: properties.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/discount_properties.json', 'w') as f:
         json.dump(discount_property_fixtures, f, indent=2)
 
-    logger.info('Create fixture: discount_properties.json... OK')
+    logger.info(f'Create fixture: discount_properties.json{SUCCESS_LOG_INFO}')
 
     with open('properties/fixtures/discounts.json', 'w') as f:
         json.dump(discount_fixtures, f, indent=2)
 
-    logger.info('Create fixture: discounts.json... OK')
+    logger.info(f'Create fixture: discounts.json{SUCCESS_LOG_INFO}')
 
 
 build_fixtures()

@@ -17,4 +17,4 @@ def set_personal_data(index: int) -> Tuple[str, str]:
     return password, phone
 
 
-
+SUCCESS_LOG_INFO: str = '... OK'
